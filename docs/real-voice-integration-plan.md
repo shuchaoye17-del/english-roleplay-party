@@ -30,28 +30,40 @@ Recorder states:
 - `stopped`
 - `error`
 
-## Phase 4: Server transcription route
+## Current Implementation: Phase 4
 
-Add later:
+Implemented in `phase-4-mock-transcription-api`:
 
-- `POST /api/transcribe`
-- Accept audio blob
-- Call speech-to-text server-side
-- Return transcript JSON
+- Added `src/app/api/transcribe/route.ts`.
+- Added `src/lib/transcription.ts`.
+- `/play/[id]` now calls the mock transcription API after recording stops.
+- The API accepts `FormData` with an `audio` blob and `durationMs`.
+- The API returns mock transcript JSON.
+- The client helper falls back to local mock transcript if the request fails.
+- Audio is not persisted.
+- OpenAI API is still not connected.
 
-Never expose API keys to the client.
-
-Suggested response:
+Mock response:
 
 ```json
 {
   "transcript": "Sorry, I think this isn't what I ordered.",
   "durationMs": 8420,
-  "confidence": 0.91
+  "confidence": 0.91,
+  "source": "mock"
 }
 ```
 
-## Phase 5: Structured scoring route
+## Phase 5: Real speech-to-text
+
+Add later:
+
+- Replace the mock body of `POST /api/transcribe` with real server-side speech-to-text.
+- Use environment variables.
+- Never expose API keys to the client.
+- Keep the existing mock fallback.
+
+## Phase 6: Structured scoring route
 
 Add later:
 
@@ -95,12 +107,11 @@ Always keep mock fallback:
 
 The game must continue.
 
-## Non-goals for Phase 3
+## Non-goals for Phase 4
 
 Do not add:
 
 - OpenAI API
-- server transcription route
 - Supabase
 - login
 - payment
