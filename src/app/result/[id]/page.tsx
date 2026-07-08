@@ -59,7 +59,7 @@ export default function ResultPage({ params }: { params: { id: string } }) {
 
       <Card className="mt-5 space-y-3">
         <Badge className="bg-sky/20">本局高光台词</Badge>
-        <p className="text-xl font-black text-slate-900">“Sorry, I think this isn't what I ordered.”</p>
+        <p className="text-xl font-black text-slate-900">“Sorry, I think this isn&apos;t what I ordered.”</p>
         <p className="text-sm leading-6 text-slate-600">简单、自然，而且很符合“礼貌但有点不满”的角色状态。</p>
       </Card>
 
