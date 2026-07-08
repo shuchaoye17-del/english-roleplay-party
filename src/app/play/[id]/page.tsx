@@ -72,13 +72,14 @@ export default function PlayPage({ params }: { params: { id: string } }) {
   };
 
   useEffect(() => {
-    if (!pendingTranscription || !recorder.audioBlob) return;
+    const audioBlob = recorder.audioBlob;
+    if (!pendingTranscription || !audioBlob) return;
 
     let cancelled = false;
 
     const runTranscription = async () => {
       setState('transcribing');
-      const result = await transcribeAudio(recorder.audioBlob, recorder.durationMs);
+      const result = await transcribeAudio(audioBlob, recorder.durationMs);
       if (cancelled) return;
       setTranscriptionNote(result.message ?? '已完成本轮转写。');
       completeTurn(result.transcript || currentLine.transcript, 'feedback');
