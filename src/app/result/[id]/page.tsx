@@ -2,6 +2,7 @@ import { getScenario } from '@/data/scenarios';
 import { expressionCards } from '@/data/expressionCards';
 import { rewards } from '@/data/rewards';
 import { Badge, BottomNav, Button, Card, PhoneShell, ProgressBar } from '@/components/ui';
+import { RewardBadge } from '@/components/RewardBadge';
 
 const scores = [
   { label: '入戏程度', value: 92 },
@@ -18,13 +19,18 @@ export default function ResultPage({ params }: { params: { id: string } }) {
 
   return (
     <PhoneShell className="pb-24">
-      <section className="rounded-[2rem] bg-gradient-to-br from-sunshine/40 via-coral/20 to-sky/30 p-6 text-center">
-        <div className="text-6xl">🏆</div>
+      <section className="overflow-hidden rounded-[2rem] bg-gradient-to-br from-sunshine/40 via-coral/20 to-sky/30 p-6 text-center">
+        <div className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-white text-6xl shadow-sm">🏆</div>
         <Badge className="mt-4 bg-white/80">演绎完成！</Badge>
-        <h1 className="mt-4 text-5xl font-black text-slate-900">A</h1>
+        <h1 className="mt-4 text-6xl font-black text-slate-900">A</h1>
         <p className="mt-2 text-sm font-bold text-slate-600">团队评级</p>
         <p className="mt-4 text-4xl font-black text-coral">{total}</p>
         <p className="text-sm font-bold text-slate-600">综合表现分</p>
+        <div className="mt-5 grid grid-cols-3 gap-3">
+          <RewardBadge icon="⭐" label="EXP" value={`+${rewards.exp}`} />
+          <RewardBadge icon="🪙" label="金币" value={`+${rewards.coins}`} />
+          <RewardBadge icon="💎" label="宝石" value={`+${rewards.gems}`} />
+        </div>
       </section>
 
       <Card className="mt-5 space-y-4">
@@ -60,25 +66,20 @@ export default function ResultPage({ params }: { params: { id: string } }) {
       <Card className="mt-5 space-y-4">
         <h2 className="text-lg font-black text-slate-900">获得表达卡</h2>
         {expressionCards.map((card) => (
-          <div key={card.id} className="rounded-3xl border border-slate-100 bg-gradient-to-br from-white to-sunshine/20 p-4">
-            <Badge className="bg-white">{card.type}</Badge>
+          <div key={card.id} className="rounded-3xl border border-slate-100 bg-gradient-to-br from-white to-sunshine/20 p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <Badge className="bg-white">{card.type}</Badge>
+              <span className="text-2xl">🃏</span>
+            </div>
             <p className="mt-3 text-lg font-black text-slate-900">{card.expression}</p>
             <p className="mt-1 text-sm text-slate-600">{card.meaning}</p>
+            <p className="mt-3 rounded-2xl bg-white px-3 py-2 text-xs font-bold text-slate-500">{card.scene}</p>
           </div>
         ))}
       </Card>
 
-      <Card className="mt-5 bg-fresh/10">
-        <h2 className="text-lg font-black text-slate-900">奖励</h2>
-        <div className="mt-4 grid grid-cols-3 gap-3 text-center text-sm font-black text-slate-700">
-          <div className="rounded-2xl bg-white p-3">EXP<br />+{rewards.exp}</div>
-          <div className="rounded-2xl bg-white p-3">金币<br />+{rewards.coins}</div>
-          <div className="rounded-2xl bg-white p-3">宝石<br />+{rewards.gems}</div>
-        </div>
-      </Card>
-
       <Card className="mt-5 bg-sky/10 text-sm leading-6 text-slate-600">
-        本局有 1 个回合可由剧场助演完成，剧情仍顺利通关。
+        本局有 1 个回合可由剧场助演完成，剧情仍顺利通关。其他玩家不会受到惩罚。
       </Card>
 
       <div className="mt-5 grid gap-3">
