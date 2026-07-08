@@ -16,9 +16,29 @@ Use this before merging a PR or deploying.
 - `/onboarding` creates an avatar.
 - `/lobby` shows story cards and locked social modes.
 - `/room/cafe-chaos` shows room, players, roles, AI stand-in.
-- `/play/cafe-chaos` completes a mock 5-turn voice scenario.
+- `/play/cafe-chaos` completes a 5-turn voice scenario.
 - `/result/cafe-chaos` shows score, title, rewards, expression cards.
 - `/cards` shows expression cards and wardrobe items.
+
+## Voice checks
+
+Without `OPENAI_API_KEY`:
+
+- `/play/cafe-chaos` still works.
+- Recording can stop and continue with mock transcription.
+- The game does not break if microphone permission is denied.
+
+With `OPENAI_API_KEY`:
+
+- `/api/transcribe` can return a real transcript.
+- The browser never receives the API key.
+- If OpenAI fails, the game continues with mock fallback.
+
+Optional deployment variable:
+
+```bash
+OPENAI_TRANSCRIBE_MODEL=gpt-4o-mini-transcribe
+```
 
 ## Engineering checks
 
@@ -49,7 +69,7 @@ Do not accidentally add:
 
 - Payment
 - Login
-- Database
-- Real OpenAI API
+- Database persistence
+- AI scoring before Phase 6
 - Real-time voice chat
 - Large community features
