@@ -121,7 +121,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
 
       <div className="mt-6">
         <MicButton onClick={simulateVoice} state={state} />
-        <button onClick={triggerStandIn} className="mx-auto mt-3 block text-xs font-bold text-slate-400">模拟超时：让 AI 助演接替</button>
+        <button type="button" onClick={triggerStandIn} className="mx-auto mt-3 block text-xs font-bold text-slate-400">模拟超时：让 AI 助演接替</button>
       </div>
 
       {lastTranscript ? (
@@ -133,9 +133,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
             <p><b>更自然表达：</b>Could you check it for me?</p>
             <p><b>剧情反应：</b>{currentLine.reaction}</p>
           </div>
-          <Button>
-            <span onClick={nextTurn} className="block w-full">继续下一轮</span>
-          </Button>
+          <Button onClick={nextTurn}>继续下一轮</Button>
         </Card>
       ) : null}
 
