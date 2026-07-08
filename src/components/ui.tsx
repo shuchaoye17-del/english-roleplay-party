@@ -3,6 +3,12 @@ import type { ReactNode } from 'react';
 
 type BoxProps = { children: ReactNode; className?: string };
 
+type ButtonProps = BoxProps & {
+  href?: string;
+  onClick?: () => void;
+  disabled?: boolean;
+};
+
 export function PhoneShell({ children, className = '' }: BoxProps) {
   return <main className={`mx-auto min-h-screen w-full max-w-md bg-[#fffaf5] px-4 py-5 ${className}`}>{children}</main>;
 }
@@ -15,10 +21,10 @@ export function Badge({ children, className = '' }: BoxProps) {
   return <span className={`inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 ${className}`}>{children}</span>;
 }
 
-export function Button({ children, href, className = '' }: BoxProps & { href?: string }) {
-  const styles = `inline-flex w-full items-center justify-center rounded-full bg-coral px-5 py-3 text-center text-sm font-extrabold text-white shadow-sm transition active:scale-95 ${className}`;
+export function Button({ children, href, onClick, disabled = false, className = '' }: ButtonProps) {
+  const styles = `inline-flex w-full items-center justify-center rounded-full bg-coral px-5 py-3 text-center text-sm font-extrabold text-white shadow-sm transition active:scale-95 ${disabled ? 'opacity-50' : ''} ${className}`;
   if (href) return <Link className={styles} href={href}>{children}</Link>;
-  return <button className={styles}>{children}</button>;
+  return <button type="button" disabled={disabled} onClick={onClick} className={styles}>{children}</button>;
 }
 
 export function AvatarBubble({ emoji, name, className = '' }: { emoji: string; name?: string; className?: string }) {
