@@ -3,6 +3,7 @@ import { mockRoomPlayers } from '@/data/rooms';
 import { Badge, BottomNav, Button, Card, PhoneShell } from '@/components/ui';
 import { RoleCard } from '@/components/RoleCard';
 import { PlayerSlot } from '@/components/PlayerSlot';
+import { ScenePanel } from '@/components/ScenePanel';
 
 export default function RoomPage({ params }: { params: { id: string } }) {
   const scenario = getScenario(params.id);
@@ -10,23 +11,9 @@ export default function RoomPage({ params }: { params: { id: string } }) {
 
   return (
     <PhoneShell className="pb-24">
-      <header className="mb-5 overflow-hidden rounded-[2rem] bg-gradient-to-br from-sky/30 via-white to-partyPurple/20 p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <Badge className="bg-white/80">开演前后台</Badge>
-            <h1 className="mt-4 text-3xl font-black text-slate-900">{scenario.title}</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{scenario.conflict}</p>
-          </div>
-          <div className="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-white text-4xl shadow-sm">🎭</div>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Badge>{scenario.players}</Badge>
-          <Badge>{scenario.duration}</Badge>
-          <Badge>{scenario.difficulty}</Badge>
-        </div>
-      </header>
+      <ScenePanel scenario={scenario} label="开演前后台" />
 
-      <Card className="mb-4 bg-white/90">
+      <Card className="mb-4 mt-4 bg-white/90">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-bold text-slate-400">房间号</p>

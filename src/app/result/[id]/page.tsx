@@ -3,6 +3,7 @@ import { expressionCards } from '@/data/expressionCards';
 import { rewards } from '@/data/rewards';
 import { Badge, BottomNav, Button, Card, PhoneShell, ProgressBar } from '@/components/ui';
 import { RewardBadge } from '@/components/RewardBadge';
+import { ExpressionCardView } from '@/components/ExpressionCardView';
 
 const scores = [
   { label: '入戏程度', value: 92 },
@@ -66,15 +67,7 @@ export default function ResultPage({ params }: { params: { id: string } }) {
       <Card className="mt-5 space-y-4">
         <h2 className="text-lg font-black text-slate-900">获得表达卡</h2>
         {expressionCards.map((card) => (
-          <div key={card.id} className="rounded-3xl border border-slate-100 bg-gradient-to-br from-white to-sunshine/20 p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <Badge className="bg-white">{card.type}</Badge>
-              <span className="text-2xl">🃏</span>
-            </div>
-            <p className="mt-3 text-lg font-black text-slate-900">{card.expression}</p>
-            <p className="mt-1 text-sm text-slate-600">{card.meaning}</p>
-            <p className="mt-3 rounded-2xl bg-white px-3 py-2 text-xs font-bold text-slate-500">{card.scene}</p>
-          </div>
+          <ExpressionCardView key={card.id} card={card} compact />
         ))}
       </Card>
 
