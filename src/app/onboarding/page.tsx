@@ -6,6 +6,8 @@ import { avatars, englishModes, personalityTags } from '@/data/avatars';
 import { Badge, Button, Card, PhoneShell } from '@/components/ui';
 import { savePlayerProfile } from '@/lib/storage';
 
+const demoBenefits = ['3 分钟体验一局', '开口说就能玩', '不会说也有救场台词'];
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [selectedAvatar, setSelectedAvatar] = useState(avatars[0]);
@@ -36,10 +38,17 @@ export default function OnboardingPage() {
 
   return (
     <PhoneShell className="pb-10">
-      <div className="mb-6 rounded-[2rem] bg-gradient-to-br from-coral/25 via-sunshine/30 to-sky/30 p-5">
-        <Badge className="bg-white/80">英语角色派对</Badge>
-        <h1 className="mt-4 text-3xl font-black leading-tight text-slate-900">创建你的英语角色</h1>
-        <p className="mt-2 text-sm leading-6 text-slate-600">选一个角色，准备进入你的第一场英文小剧场。</p>
+      <div className="mb-6 overflow-hidden rounded-[2rem] bg-gradient-to-br from-coral/25 via-sunshine/30 to-sky/30 p-5">
+        <Badge className="bg-white/80">英语角色派对 · v0.1 demo</Badge>
+        <h1 className="mt-4 text-3xl font-black leading-tight text-slate-900">用英语演故事，边玩边练口语</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600">选一个角色，开一局咖啡馆小剧场。你只需要开口说一句，系统会帮你转写、评分、给表达卡。</p>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          {demoBenefits.map((benefit) => (
+            <div key={benefit} className="rounded-2xl bg-white/70 px-3 py-2 text-center text-xs font-black text-slate-700 shadow-sm">
+              {benefit}
+            </div>
+          ))}
+        </div>
       </div>
 
       <Card className="space-y-5">
@@ -113,7 +122,8 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        <Button onClick={save} disabled={!canSubmit}>进入英语派对</Button>
+        <Button onClick={save} disabled={!canSubmit}>开一局英语小剧场</Button>
+        <p className="text-center text-xs font-bold text-slate-400">不用准备，不会卡关，AI 助演会帮你接住剧情。</p>
       </Card>
     </PhoneShell>
   );
