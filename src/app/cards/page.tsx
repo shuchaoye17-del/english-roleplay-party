@@ -1,5 +1,6 @@
 import { expressionCards } from '@/data/expressionCards';
 import { BottomNav, Badge, Card, PhoneShell } from '@/components/ui';
+import { ExpressionCardView } from '@/components/ExpressionCardView';
 
 const outfits = [
   { name: '派对开场装', status: '已拥有', emoji: '🎉' },
@@ -18,21 +19,12 @@ export default function CardsPage() {
       </header>
 
       <Card className="mb-5 space-y-4">
-        <h2 className="text-xl font-black text-slate-900">表达卡</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-black text-slate-900">表达卡</h2>
+          <Badge className="bg-sunshine/30">已收集 {expressionCards.length}</Badge>
+        </div>
         {expressionCards.map((card) => (
-          <div key={card.id} className="rounded-3xl border border-slate-100 bg-gradient-to-br from-white to-sky/10 p-4">
-            <div className="flex items-center justify-between">
-              <Badge className="bg-sunshine/30">{card.type}</Badge>
-              <Badge className="bg-white">{card.rarity}</Badge>
-            </div>
-            <h3 className="mt-4 text-xl font-black text-slate-900">{card.expression}</h3>
-            <p className="mt-1 text-sm font-bold text-slate-600">{card.meaning}</p>
-            <div className="mt-4 rounded-2xl bg-white p-3 text-sm leading-6 text-slate-600">
-              <p><b>场景：</b>{card.scene}</p>
-              <p><b>情绪：</b>{card.emotion}</p>
-              <p><b>例句：</b>{card.example}</p>
-            </div>
-          </div>
+          <ExpressionCardView key={card.id} card={card} />
         ))}
       </Card>
 
