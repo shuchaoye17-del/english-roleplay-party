@@ -7,6 +7,7 @@ import { Badge, BottomNav, Button, Card, PhoneShell, ProgressBar } from '@/compo
 import { MicButton } from '@/components/MicButton';
 import { RoleCard } from '@/components/RoleCard';
 import { VoiceStatePill } from '@/components/VoiceStatePill';
+import { ScenePanel } from '@/components/ScenePanel';
 
 type TurnState = 'waiting_turn' | 'preparing' | 'recording' | 'transcribing' | 'feedback' | 'timeout_warning' | 'rescue_line_shown' | 'ai_stand_in';
 
@@ -101,19 +102,9 @@ export default function PlayPage({ params }: { params: { id: string } }) {
 
       <ProgressBar value={progress} />
 
-      <section className={`mt-5 rounded-[2rem] bg-gradient-to-br ${scenario.color} p-5 shadow-sm`}>
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-xs font-black text-slate-500">当前舞台</p>
-            <h2 className="mt-1 text-2xl font-black text-slate-900">{scenario.location}</h2>
-          </div>
-          <div className="grid h-16 w-16 place-items-center rounded-full bg-white text-4xl shadow-sm">☕</div>
-        </div>
-        <div className="mt-6 rounded-3xl bg-white/90 p-4 text-sm leading-6 text-slate-700 shadow-sm">
-          <p className="font-black text-slate-900">AI 旁白</p>
-          <p className="mt-1">{scenario.conflict}</p>
-        </div>
-      </section>
+      <div className="mt-5">
+        <ScenePanel scenario={scenario} />
+      </div>
 
       {role ? (
         <div className="mt-4">
