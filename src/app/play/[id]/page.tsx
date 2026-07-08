@@ -8,6 +8,7 @@ import { MicButton } from '@/components/MicButton';
 import { RoleCard } from '@/components/RoleCard';
 import { VoiceStatePill } from '@/components/VoiceStatePill';
 import { ScenePanel } from '@/components/ScenePanel';
+import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 
 type TurnState = 'waiting_turn' | 'preparing' | 'recording' | 'transcribing' | 'feedback' | 'timeout_warning' | 'rescue_line_shown' | 'ai_stand_in';
 
@@ -52,6 +53,7 @@ const mockLines = [
 export default function PlayPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const scenario = getScenario(params.id);
+  const recorder = useVoiceRecorder();
   const [turn, setTurn] = useState(0);
   const [state, setState] = useState<TurnState>('preparing');
   const [lastTranscript, setLastTranscript] = useState('');
@@ -66,10 +68,31 @@ export default function PlayPage({ params }: { params: { id: string } }) {
     setState(nextState);
   };
 
+  const finishWithMockTranscript = () => {
+    setState('transcribing');
+    window.setTimeout(() => completeTurn(currentLine.transcript, 'feedback'), 800);
+  };
+
   const simulateVoice = () => {
     setState('recording');
     window.setTimeout(() => setState('transcribing'), 700);
     window.setTimeout(() => completeTurn(currentLine.transcript, 'feedback'), 1400);
+  };
+
+  const handleMicClick = async () => {
+    if (recorder.state === 'recording') {
+      recorder.stopRecording();
+      finishWithMockTranscript();
+      return;
+    }
+
+    const started = await recorder.startRecording();
+    if (started) {
+      setState('recording');
+      return;
+    }
+
+    setState('preparing');
   };
 
   const nextTurn = () => {
@@ -77,6 +100,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
       router.push(`/result/${scenario.id}`);
       return;
     }
+    recorder.resetRecording();
     setTurn((value) => value + 1);
     setState('preparing');
     setLastTranscript('');
@@ -87,8 +111,13 @@ export default function PlayPage({ params }: { params: { id: string } }) {
   };
 
   const triggerStandIn = () => {
+    recorder.resetRecording();
     completeTurn('Sorry, I need a second to think.', 'ai_stand_in');
   };
+
+  const micLabel = recorder.state === 'recording' ? '停止录音' : recorder.state === 'permission_request' ? '请求权限中' : '开始录音';
+  const micState = recorder.state === 'permission_request' ? 'permission_request' : state;
+  const showPermissionTip = recorder.state === 'permission_denied' || recorder.state === 'error';
 
   return (
     <PhoneShell className="pb-24">
@@ -127,8 +156,22 @@ export default function PlayPage({ params }: { params: { id: string } }) {
       </Card>
 
       <div className="mt-6 rounded-[2rem] bg-white p-6 text-center shadow-sm">
-        <p className="mb-4 text-sm font-black text-slate-500">按住麦克风，说一句英文推进剧情</p>
-        <MicButton onClick={simulateVoice} state={state} />
+        <p className="mb-4 text-sm font-black text-slate-500">点击麦克风开始录音，再点一次结束。本阶段识别结果仍使用模拟台词。</p>
+        <MicButton onClick={handleMicClick} state={micState} label={micLabel} />
+        {recorder.durationMs > 0 ? (
+          <p className="mt-3 text-xs font-bold text-slate-400">已录制约 {Math.ceil(recorder.durationMs / 1000)} 秒</p>
+        ) : null}
+        {recorder.audioBlob ? (
+          <p className="mt-1 text-xs font-bold text-slate-400">录音已保存到本轮浏览器内存，暂不上传。</p>
+        ) : null}
+        {showPermissionTip ? (
+          <div className="mt-4 rounded-3xl bg-sunshine/25 p-4 text-left text-sm font-bold leading-6 text-slate-700">
+            <p>{recorder.errorMessage}</p>
+            <button type="button" onClick={simulateVoice} className="mt-3 rounded-full bg-coral px-4 py-2 text-xs font-black text-white">
+              先体验模拟演绎
+            </button>
+          </div>
+        ) : null}
         <div className="mt-4 flex justify-center gap-3 text-xs font-bold text-slate-400">
           <button type="button" onClick={showRescueLine}>显示救场台词</button>
           <button type="button" onClick={triggerStandIn}>AI 助演接替</button>
