@@ -77,6 +77,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
   const currentLine = mockLines[turn] ?? mockLines[mockLines.length - 1];
   const role = scenario.roles[0];
   const progress = useMemo(() => ((turn + 1) / mockLines.length) * 100, [turn]);
+  const isProcessingTurn = state === 'transcribing' && !lastTranscript;
 
   const completeTurn = (transcript: string, nextState: TurnState) => {
     setLastTranscript(transcript);
@@ -92,11 +93,12 @@ export default function PlayPage({ params }: { params: { id: string } }) {
 
     const runTranscriptionAndScoring = async () => {
       setState('transcribing');
+      setTranscriptionNote('录音已收到，剧场耳机正在听你的英文台词。');
       const transcription = await transcribeAudio(audioBlob, recorder.durationMs);
       if (cancelled) return;
 
       const transcript = transcription.transcript || currentLine.transcript;
-      setTranscriptionNote(transcription.message ?? '已完成本轮转写，正在生成入戏评分。');
+      setTranscriptionNote(transcription.message ?? '已完成本轮转写，AI 导演正在生成入戏评分。');
 
       const score = await scoreTurn({
         scenarioId: scenario.id,
@@ -109,6 +111,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
 
       if (cancelled) return;
       setTurnScore(score);
+      setTranscriptionNote(transcription.message ?? '转写和入戏评分已完成。');
       completeTurn(transcript, 'feedback');
       setPendingTranscription(false);
     };
@@ -122,6 +125,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
 
   const simulateVoice = () => {
     setState('recording');
+    setTranscriptionNote('模拟录音中，稍后会生成一轮示范结果。');
     window.setTimeout(() => setState('transcribing'), 700);
     window.setTimeout(() => {
       setTranscriptionNote('当前使用本地模拟演绎结果。');
@@ -133,6 +137,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
   const handleMicClick = async () => {
     if (recorder.state === 'recording') {
       setPendingTranscription(true);
+      setTranscriptionNote('录音结束，正在进入转写和评分。');
       recorder.stopRecording();
       setState('transcribing');
       return;
@@ -143,6 +148,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
     const started = await recorder.startRecording();
     if (started) {
       setState('recording');
+      setTranscriptionNote('录音中：说一句符合角色和情绪的英文台词。');
       return;
     }
 
@@ -156,7 +162,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
     }
     recorder.resetRecording();
     setPendingTranscription(false);
-    setTranscriptionNote('');
+    setTranscriptionNote('下一轮已准备好，继续开口就行。');
     setTurnScore(null);
     setTurn((value) => value + 1);
     setState('preparing');
@@ -170,7 +176,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
   const triggerStandIn = () => {
     recorder.resetRecording();
     setPendingTranscription(false);
-    setTranscriptionNote('');
+    setTranscriptionNote('剧场助演已接替这一句，队伍不会卡住。');
     setTurnScore({ ...mockTurnScore, title: '临场救场王', feedback: '这一轮由剧场助演接住，剧情继续推进。' });
     completeTurn('Sorry, I need a second to think.', 'ai_stand_in');
   };
@@ -183,7 +189,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
     <PhoneShell className="pb-24">
       <header className="mb-4 flex items-center justify-between">
         <div>
-          <Badge className="bg-white">单人剧场</Badge>
+          <Badge className="bg-white">单人剧场 · 3 分钟 demo</Badge>
           <h1 className="mt-2 text-2xl font-black text-slate-900">{scenario.title}</h1>
         </div>
         <Badge className="bg-sunshine/40">{turn + 1}/{mockLines.length}</Badge>
@@ -207,6 +213,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
           <VoiceStatePill state={state} />
         </div>
         <p className="rounded-2xl bg-slate-50 p-4 text-sm font-bold leading-6 text-slate-700">{currentLine.prompt}</p>
+        <p className="text-xs font-bold text-slate-400">不用说得完美，像角色一样接一句就行。</p>
         {state === 'rescue_line_shown' ? (
           <div className="rounded-3xl bg-sunshine/25 p-4">
             <p className="text-xs font-black text-slate-500">救场台词</p>
@@ -216,13 +223,20 @@ export default function PlayPage({ params }: { params: { id: string } }) {
       </Card>
 
       <div className="mt-6 rounded-[2rem] bg-white p-6 text-center shadow-sm">
-        <p className="mb-4 text-sm font-black text-slate-500">点击麦克风开始录音，再点一次结束。转写后会生成本轮入戏评分。</p>
+        <p className="mb-4 text-sm font-black text-slate-500">点击麦克风开始录音，再点一次结束。系统会自动转写、评分、给表达卡。</p>
         <MicButton onClick={handleMicClick} state={micState} label={micLabel} />
         {recorder.durationMs > 0 ? (
           <p className="mt-3 text-xs font-bold text-slate-400">已录制约 {Math.ceil(recorder.durationMs / 1000)} 秒</p>
         ) : null}
         {recorder.audioBlob ? (
           <p className="mt-1 text-xs font-bold text-slate-400">录音会用于本轮转写与评分，不会持久化保存。</p>
+        ) : null}
+        {transcriptionNote && !lastTranscript ? <p className="mt-3 rounded-2xl bg-sky/10 px-4 py-3 text-xs font-black text-slate-500">{transcriptionNote}</p> : null}
+        {isProcessingTurn ? (
+          <div className="mt-4 rounded-3xl bg-gradient-to-br from-sky/10 to-sunshine/20 p-4 text-left text-sm font-bold leading-6 text-slate-700">
+            <p className="font-black text-slate-900">剧场处理中…</p>
+            <p className="mt-1">① 识别你的台词 ② 生成入戏评分 ③ 发放表达卡</p>
+          </div>
         ) : null}
         {showPermissionTip ? (
           <div className="mt-4 rounded-3xl bg-sunshine/25 p-4 text-left text-sm font-bold leading-6 text-slate-700">
@@ -271,7 +285,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
             <p className="font-black text-slate-900">AI 角色回应</p>
             <p className="mt-1">“Let me check that for you. Thanks for telling me so politely.”</p>
           </div>
-          <Button onClick={nextTurn}>继续下一轮</Button>
+          <Button onClick={nextTurn}>{turn >= mockLines.length - 1 ? '查看本局结果' : '继续下一轮'}</Button>
         </Card>
       ) : null}
 
