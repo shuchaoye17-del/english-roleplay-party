@@ -2,7 +2,7 @@
 
 ## Goal
 
-Move from pure mock recording to real browser microphone capture, then later add server-side speech-to-text and structured AI scoring.
+Move from pure mock recording to real browser microphone capture, then server-side speech-to-text and structured AI scoring.
 
 The app must remain voice-first, mobile-first, and game-like.
 
@@ -54,14 +54,26 @@ Mock response:
 }
 ```
 
-## Phase 5: Real speech-to-text
+## Current Implementation: Phase 5
 
-Add later:
+Implemented in `phase-5-openai-stt`:
 
-- Replace the mock body of `POST /api/transcribe` with real server-side speech-to-text.
-- Use environment variables.
-- Never expose API keys to the client.
-- Keep the existing mock fallback.
+- Added `src/lib/server/openaiTranscription.ts`.
+- Updated `src/app/api/transcribe/route.ts`.
+- `POST /api/transcribe` now uses real OpenAI speech-to-text only when `OPENAI_API_KEY` exists.
+- Without `OPENAI_API_KEY`, local development keeps using mock transcription.
+- If OpenAI fails, the route returns mock fallback instead of breaking the game.
+- Client code remains unchanged and still calls `/api/transcribe`.
+- API keys are never exposed to the browser.
+
+Environment variables:
+
+```bash
+OPENAI_API_KEY=...
+OPENAI_TRANSCRIBE_MODEL=gpt-4o-mini-transcribe
+```
+
+`OPENAI_TRANSCRIBE_MODEL` is optional. The default is `gpt-4o-mini-transcribe`.
 
 ## Phase 6: Structured scoring route
 
@@ -101,19 +113,21 @@ Always keep mock fallback:
 
 - microphone permission denied
 - unsupported browser
-- network error
+- missing `OPENAI_API_KEY`
+- OpenAI network error
 - transcription timeout
 - AI scoring error
 
 The game must continue.
 
-## Non-goals for Phase 4
+## Non-goals for Phase 5
 
 Do not add:
 
-- OpenAI API
+- AI scoring
 - Supabase
 - login
 - payment
 - real-time voice chat
 - live multiplayer synchronization
+- audio persistence

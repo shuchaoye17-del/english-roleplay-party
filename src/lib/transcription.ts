@@ -1,8 +1,10 @@
+export type TranscriptionSource = 'openai' | 'mock' | 'mock_fallback';
+
 export type TranscriptionResult = {
   transcript: string;
   durationMs: number;
   confidence: number;
-  source: 'mock' | 'mock_fallback';
+  source: TranscriptionSource;
   message?: string;
   audioSize?: number;
 };
