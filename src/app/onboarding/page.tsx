@@ -61,6 +61,7 @@ export default function OnboardingPage() {
             {avatars.map((avatar) => (
               <button
                 key={avatar.id}
+                type="button"
                 onClick={() => {
                   setSelectedAvatar(avatar);
                   setName(avatar.name);
@@ -80,6 +81,7 @@ export default function OnboardingPage() {
             {englishModes.map((mode) => (
               <button
                 key={mode}
+                type="button"
                 onClick={() => setEnglishMode(mode)}
                 className={`w-full rounded-2xl border px-4 py-3 text-left text-sm font-bold ${englishMode === mode ? 'border-sky bg-sky/10 text-slate-900' : 'border-slate-100 bg-white text-slate-600'}`}
               >
@@ -95,6 +97,7 @@ export default function OnboardingPage() {
             {personalityTags.map((tag) => (
               <button
                 key={tag}
+                type="button"
                 onClick={() => toggleTag(tag)}
                 className={`rounded-full px-4 py-2 text-sm font-bold ${tags.includes(tag) ? 'bg-partyPurple text-white' : 'bg-slate-100 text-slate-600'}`}
               >
@@ -104,9 +107,7 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        <Button className={!canSubmit ? 'opacity-50' : ''}>
-          <span onClick={save} className="block w-full">进入英语派对</span>
-        </Button>
+        <Button onClick={save} disabled={!canSubmit}>进入英语派对</Button>
       </Card>
     </PhoneShell>
   );
