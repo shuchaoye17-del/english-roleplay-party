@@ -44,6 +44,31 @@ OPENAI_TRANSCRIBE_MODEL=gpt-4o-mini-transcribe
 OPENAI_SCORING_MODEL=gpt-4o-mini
 ```
 
+## Persistence checks
+
+Without Supabase env vars:
+
+- onboarding profile still saves through localStorage.
+- unlocked cards can stay local.
+- latest run summary can stay local.
+- no database request is required for CI or local development.
+
+Before adding real Supabase writes:
+
+- keep localStorage fallback.
+- add RLS before public production writes.
+- do not store raw audio in MVP.
+- do not put service role keys in browser env vars.
+
+## Deployment checks
+
+- `.env.example` exists and does not contain secrets.
+- `docs/deployment-guide.md` exists.
+- `docs/supabase-schema-plan.md` exists.
+- Vercel install command is `pnpm install --no-frozen-lockfile`.
+- Vercel build command is `pnpm build`.
+- `OPENAI_API_KEY` is configured only in server/deployment environment.
+
 ## Engineering checks
 
 Run:
@@ -73,6 +98,6 @@ Do not accidentally add:
 
 - Payment
 - Login
-- Database persistence
+- Real database writes before Supabase is configured
 - Real-time voice chat
 - Large community features
