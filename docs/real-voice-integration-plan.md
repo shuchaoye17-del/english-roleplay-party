@@ -43,17 +43,6 @@ Implemented in `phase-4-mock-transcription-api`:
 - Audio is not persisted.
 - OpenAI API is still not connected.
 
-Mock response:
-
-```json
-{
-  "transcript": "Sorry, I think this isn't what I ordered.",
-  "durationMs": 8420,
-  "confidence": 0.91,
-  "source": "mock"
-}
-```
-
 ## Current Implementation: Phase 5
 
 Implemented in `phase-5-openai-stt`:
@@ -75,22 +64,28 @@ OPENAI_TRANSCRIBE_MODEL=gpt-4o-mini-transcribe
 
 `OPENAI_TRANSCRIBE_MODEL` is optional. The default is `gpt-4o-mini-transcribe`.
 
-## Phase 6: Structured scoring route
+## Current Implementation: Phase 6
 
-Add later:
+Implemented in `phase-6-ai-scoring`:
 
-- `POST /api/score-turn`
+- Added `src/lib/scoring.ts`.
+- Added `src/lib/server/openaiScoring.ts`.
+- Added `src/app/api/score-turn/route.ts`.
+- `/play/[id]` now requests structured scoring after transcription.
+- Scoring returns six game scores: role immersion, emotion match, pronunciation clarity, English naturalness, story progress, and teamwork.
+- Feedback remains game-like, not school-like.
+- Without `OPENAI_API_KEY`, scoring returns mock fallback.
+- If OpenAI fails or returns invalid data, scoring returns mock fallback.
 
-Input:
+Optional environment variable:
 
-- scenario id
-- role
-- emotion target
-- hidden mission
-- user transcript
-- turn history
+```bash
+OPENAI_SCORING_MODEL=gpt-4o-mini
+```
 
-Output JSON:
+The default scoring model is `gpt-4o-mini`.
+
+## Structured score JSON
 
 ```json
 {
@@ -103,7 +98,8 @@ Output JSON:
   "title": "气氛救场王",
   "feedback": "这句很符合礼貌但不满的情绪。",
   "betterExpression": "Could you check it for me?",
-  "expressionCards": ["No worries", "Could you check it?"]
+  "expressionCards": ["No worries", "Could you check it?"],
+  "source": "openai"
 }
 ```
 
@@ -117,17 +113,18 @@ Always keep mock fallback:
 - OpenAI network error
 - transcription timeout
 - AI scoring error
+- malformed AI response
 
 The game must continue.
 
-## Non-goals for Phase 5
+## Non-goals for Phase 6
 
 Do not add:
 
-- AI scoring
 - Supabase
 - login
 - payment
 - real-time voice chat
 - live multiplayer synchronization
 - audio persistence
+- persisted scores
