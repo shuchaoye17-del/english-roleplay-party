@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getScenario } from '@/data/scenarios';
 import { Badge, BottomNav, Button, Card, PhoneShell, ProgressBar } from '@/components/ui';
@@ -9,6 +9,7 @@ import { RoleCard } from '@/components/RoleCard';
 import { VoiceStatePill } from '@/components/VoiceStatePill';
 import { ScenePanel } from '@/components/ScenePanel';
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
+import { transcribeAudio } from '@/lib/transcription';
 
 type TurnState = 'waiting_turn' | 'preparing' | 'recording' | 'transcribing' | 'feedback' | 'timeout_warning' | 'rescue_line_shown' | 'ai_stand_in';
 
@@ -58,6 +59,8 @@ export default function PlayPage({ params }: { params: { id: string } }) {
   const [state, setState] = useState<TurnState>('preparing');
   const [lastTranscript, setLastTranscript] = useState('');
   const [turnHistory, setTurnHistory] = useState<string[]>([]);
+  const [pendingTranscription, setPendingTranscription] = useState(false);
+  const [transcriptionNote, setTranscriptionNote] = useState('');
   const currentLine = mockLines[turn] ?? mockLines[mockLines.length - 1];
   const role = scenario.roles[0];
   const progress = useMemo(() => ((turn + 1) / mockLines.length) * 100, [turn]);
@@ -68,24 +71,45 @@ export default function PlayPage({ params }: { params: { id: string } }) {
     setState(nextState);
   };
 
-  const finishWithMockTranscript = () => {
-    setState('transcribing');
-    window.setTimeout(() => completeTurn(currentLine.transcript, 'feedback'), 800);
-  };
+  useEffect(() => {
+    if (!pendingTranscription || !recorder.audioBlob) return;
+
+    let cancelled = false;
+
+    const runTranscription = async () => {
+      setState('transcribing');
+      const result = await transcribeAudio(recorder.audioBlob, recorder.durationMs);
+      if (cancelled) return;
+      setTranscriptionNote(result.message ?? '已完成本轮转写。');
+      completeTurn(result.transcript || currentLine.transcript, 'feedback');
+      setPendingTranscription(false);
+    };
+
+    void runTranscription();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentLine.transcript, pendingTranscription, recorder.audioBlob, recorder.durationMs]);
 
   const simulateVoice = () => {
     setState('recording');
     window.setTimeout(() => setState('transcribing'), 700);
-    window.setTimeout(() => completeTurn(currentLine.transcript, 'feedback'), 1400);
+    window.setTimeout(() => {
+      setTranscriptionNote('当前使用本地模拟演绎结果。');
+      completeTurn(currentLine.transcript, 'feedback');
+    }, 1400);
   };
 
   const handleMicClick = async () => {
     if (recorder.state === 'recording') {
+      setPendingTranscription(true);
       recorder.stopRecording();
-      finishWithMockTranscript();
+      setState('transcribing');
       return;
     }
 
+    setTranscriptionNote('');
     const started = await recorder.startRecording();
     if (started) {
       setState('recording');
@@ -101,6 +125,8 @@ export default function PlayPage({ params }: { params: { id: string } }) {
       return;
     }
     recorder.resetRecording();
+    setPendingTranscription(false);
+    setTranscriptionNote('');
     setTurn((value) => value + 1);
     setState('preparing');
     setLastTranscript('');
@@ -112,6 +138,8 @@ export default function PlayPage({ params }: { params: { id: string } }) {
 
   const triggerStandIn = () => {
     recorder.resetRecording();
+    setPendingTranscription(false);
+    setTranscriptionNote('');
     completeTurn('Sorry, I need a second to think.', 'ai_stand_in');
   };
 
@@ -156,13 +184,13 @@ export default function PlayPage({ params }: { params: { id: string } }) {
       </Card>
 
       <div className="mt-6 rounded-[2rem] bg-white p-6 text-center shadow-sm">
-        <p className="mb-4 text-sm font-black text-slate-500">点击麦克风开始录音，再点一次结束。本阶段识别结果仍使用模拟台词。</p>
+        <p className="mb-4 text-sm font-black text-slate-500">点击麦克风开始录音，再点一次结束。本阶段会走 mock 转写接口。</p>
         <MicButton onClick={handleMicClick} state={micState} label={micLabel} />
         {recorder.durationMs > 0 ? (
           <p className="mt-3 text-xs font-bold text-slate-400">已录制约 {Math.ceil(recorder.durationMs / 1000)} 秒</p>
         ) : null}
         {recorder.audioBlob ? (
-          <p className="mt-1 text-xs font-bold text-slate-400">录音已保存到本轮浏览器内存，暂不上传。</p>
+          <p className="mt-1 text-xs font-bold text-slate-400">录音已发送给本地 mock 转写接口，不会持久化保存。</p>
         ) : null}
         {showPermissionTip ? (
           <div className="mt-4 rounded-3xl bg-sunshine/25 p-4 text-left text-sm font-bold leading-6 text-slate-700">
@@ -182,6 +210,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
         <Card className="mt-5 space-y-3">
           <Badge className="bg-sky/20">识别结果</Badge>
           <p className="text-lg font-black text-slate-900">“{lastTranscript}”</p>
+          {transcriptionNote ? <p className="rounded-2xl bg-sky/10 px-4 py-3 text-xs font-bold text-slate-500">{transcriptionNote}</p> : null}
           <div className="rounded-2xl bg-fresh/10 p-4 text-sm leading-6 text-slate-700">
             <p><b>入戏反馈：</b>{state === 'ai_stand_in' ? '这一轮由剧场助演完成，剧情继续推进。' : currentLine.feedback}</p>
             <p><b>更自然表达：</b>Could you check it for me?</p>
