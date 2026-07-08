@@ -1,44 +1,59 @@
 # Real Voice Integration Plan
 
-Do not implement this until the frontend MVP and voice mock flow are stable.
-
 ## Goal
 
-Replace the mock recording flow with real microphone recording, audio upload, speech-to-text, and structured roleplay feedback.
+Move from pure mock recording to real browser microphone capture, then later add server-side speech-to-text and structured AI scoring.
 
-## Phase 1: Browser recording
+The app must remain voice-first, mobile-first, and game-like.
 
-Use browser APIs:
+## Current Implementation: Phase 3
 
-- `navigator.mediaDevices.getUserMedia`
-- `MediaRecorder`
-- audio blob generation
+Implemented in `phase-3-voice-recording`:
 
-UX states:
+- Added `src/hooks/useVoiceRecorder.ts`.
+- Uses `navigator.mediaDevices.getUserMedia`.
+- Uses `MediaRecorder`.
+- Captures an in-memory `audioBlob`.
+- Tracks approximate recording duration.
+- Supports friendly permission failure copy.
+- Keeps existing mock transcript and mock scoring.
+- Does not upload audio.
+- Does not call OpenAI API.
 
-- permission_request
-- permission_denied
-- ready_to_record
-- recording
-- uploading
-- transcribing
-- transcript_ready
-- fallback_mock
+Recorder states:
 
-## Phase 2: Server transcription route
+- `idle`
+- `permission_request`
+- `permission_denied`
+- `ready`
+- `recording`
+- `stopped`
+- `error`
 
-Add:
+## Phase 4: Server transcription route
+
+Add later:
 
 - `POST /api/transcribe`
 - Accept audio blob
 - Call speech-to-text server-side
 - Return transcript JSON
 
-Never expose API key to client.
+Never expose API keys to the client.
 
-## Phase 3: Structured scoring route
+Suggested response:
 
-Add:
+```json
+{
+  "transcript": "Sorry, I think this isn't what I ordered.",
+  "durationMs": 8420,
+  "confidence": 0.91
+}
+```
+
+## Phase 5: Structured scoring route
+
+Add later:
 
 - `POST /api/score-turn`
 
@@ -68,18 +83,26 @@ Output JSON:
 }
 ```
 
-## Phase 4: Fallbacks
+## Fallbacks
 
 Always keep mock fallback:
 
 - microphone permission denied
+- unsupported browser
 - network error
 - transcription timeout
 - AI scoring error
 
 The game must continue.
 
-## Non-goals
+## Non-goals for Phase 3
 
-Do not build real-time voice chat in this phase.
-Do not build live multiplayer synchronization yet.
+Do not add:
+
+- OpenAI API
+- server transcription route
+- Supabase
+- login
+- payment
+- real-time voice chat
+- live multiplayer synchronization
