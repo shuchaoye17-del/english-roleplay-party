@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { avatars, englishModes, personalityTags } from '@/data/avatars';
 import { Badge, Button, Card, PhoneShell } from '@/components/ui';
+import { savePlayerProfile } from '@/lib/storage';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -24,7 +25,12 @@ export default function OnboardingPage() {
 
   const save = () => {
     if (!canSubmit) return;
-    localStorage.setItem('erp-avatar', JSON.stringify({ avatar: selectedAvatar, name, englishMode, tags, level: 1 }));
+    savePlayerProfile({
+      name: name.trim(),
+      avatarId: selectedAvatar.id,
+      level: 1,
+      exp: 0
+    });
     router.push('/lobby');
   };
 
