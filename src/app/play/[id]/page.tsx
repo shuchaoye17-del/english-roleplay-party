@@ -12,7 +12,7 @@ import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { transcribeAudio } from '@/lib/transcription';
 import { mockTurnScore, scoreTurn, type TurnScoreResult } from '@/lib/scoring';
 
-type TurnState = 'waiting_turn' | 'preparing' | 'recording' | 'transcribing' | 'feedback' | 'timeout_warning' | 'rescue_line_shown' | 'ai_stand_in';
+type TurnState = 'waiting_turn' | 'preparing' | 'recording' | 'transcribing' | 'feedback' | 'timeout_warning' | 'ai_stand_in';
 
 const mockLines = [
   {
@@ -93,11 +93,20 @@ export default function PlayPage({ params }: { params: { id: string } }) {
 
     const runTranscriptionAndScoring = async () => {
       setState('transcribing');
+
+      if (audioBlob.size < 200 || recorder.durationMs < 500) {
+        setTranscriptionNote('录音太短或没有检测到声音，先用本轮示范台词继续。');
+        setTurnScore(mockTurnScore);
+        completeTurn(currentLine.rescueLine, 'feedback');
+        setPendingTranscription(false);
+        return;
+      }
+
       setTranscriptionNote('录音已收到，剧场耳机正在听你的英文台词。');
-      const transcription = await transcribeAudio(audioBlob, recorder.durationMs);
+      const transcription = await transcribeAudio(audioBlob, recorder.durationMs, currentLine.rescueLine);
       if (cancelled) return;
 
-      const transcript = transcription.transcript || currentLine.transcript;
+      const transcript = transcription.transcript || currentLine.rescueLine;
       setTranscriptionNote(transcription.message ?? '已完成本轮转写，AI 导演正在生成入戏评分。');
 
       const score = await scoreTurn({
@@ -121,7 +130,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
     return () => {
       cancelled = true;
     };
-  }, [currentLine.prompt, currentLine.transcript, pendingTranscription, recorder.audioBlob, recorder.durationMs, role?.emotion, role?.hiddenMission, role?.name, scenario.id, turnHistory]);
+  }, [currentLine.prompt, currentLine.rescueLine, pendingTranscription, recorder.audioBlob, recorder.durationMs, role?.emotion, role?.hiddenMission, role?.name, scenario.id, turnHistory]);
 
   const simulateVoice = () => {
     setState('recording');
@@ -130,7 +139,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
     window.setTimeout(() => {
       setTranscriptionNote('当前使用本地模拟演绎结果。');
       setTurnScore(mockTurnScore);
-      completeTurn(currentLine.transcript, 'feedback');
+      completeTurn(currentLine.rescueLine, 'feedback');
     }, 1400);
   };
 
@@ -148,7 +157,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
     const started = await recorder.startRecording();
     if (started) {
       setState('recording');
-      setTranscriptionNote('录音中：说一句符合角色和情绪的英文台词。');
+      setTranscriptionNote('录音中：直接读出上面的英文台词，也可以自由发挥。');
       return;
     }
 
@@ -162,15 +171,11 @@ export default function PlayPage({ params }: { params: { id: string } }) {
     }
     recorder.resetRecording();
     setPendingTranscription(false);
-    setTranscriptionNote('下一轮已准备好，继续开口就行。');
+    setTranscriptionNote('下一轮已准备好，直接读出新的英文台词。');
     setTurnScore(null);
     setTurn((value) => value + 1);
     setState('preparing');
     setLastTranscript('');
-  };
-
-  const showRescueLine = () => {
-    setState('rescue_line_shown');
   };
 
   const triggerStandIn = () => {
@@ -178,7 +183,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
     setPendingTranscription(false);
     setTranscriptionNote('剧场助演已接替这一句，队伍不会卡住。');
     setTurnScore({ ...mockTurnScore, title: '临场救场王', feedback: '这一轮由剧场助演接住，剧情继续推进。' });
-    completeTurn('Sorry, I need a second to think.', 'ai_stand_in');
+    completeTurn(currentLine.rescueLine, 'ai_stand_in');
   };
 
   const micLabel = recorder.state === 'recording' ? '停止录音' : recorder.state === 'permission_request' ? '请求权限中' : '开始录音';
@@ -209,33 +214,32 @@ export default function PlayPage({ params }: { params: { id: string } }) {
 
       <Card className="mt-4 space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-black text-slate-900">你的本轮台词目标</h2>
+          <h2 className="text-lg font-black text-slate-900">你的本轮台词</h2>
           <VoiceStatePill state={state} />
         </div>
         <p className="rounded-2xl bg-slate-50 p-4 text-sm font-bold leading-6 text-slate-700">{currentLine.prompt}</p>
-        <p className="text-xs font-bold text-slate-400">不用说得完美，像角色一样接一句就行。</p>
-        {state === 'rescue_line_shown' ? (
-          <div className="rounded-3xl bg-sunshine/25 p-4">
-            <p className="text-xs font-black text-slate-500">救场台词</p>
-            <p className="mt-1 text-lg font-black text-slate-900">{currentLine.rescueLine}</p>
-          </div>
-        ) : null}
+        <div className="rounded-3xl bg-sunshine/25 p-4 shadow-sm">
+          <p className="text-xs font-black text-slate-500">直接读这句，也可以自己改一点</p>
+          <p className="mt-1 text-xl font-black leading-8 text-slate-900">{currentLine.rescueLine}</p>
+        </div>
+        <p className="text-xs font-bold text-slate-400">不用说得完美，先把剧情接下去就算成功。</p>
       </Card>
 
       <div className="mt-6 rounded-[2rem] bg-white p-6 text-center shadow-sm">
-        <p className="mb-4 text-sm font-black text-slate-500">点击麦克风开始录音，再点一次结束。系统会自动转写、评分、给表达卡。</p>
+        <p className="mb-4 text-sm font-black text-slate-500">点击麦克风开始录音，读出上面的英文句子，再点一次结束。</p>
         <MicButton onClick={handleMicClick} state={micState} label={micLabel} />
         {recorder.durationMs > 0 ? (
           <p className="mt-3 text-xs font-bold text-slate-400">已录制约 {Math.ceil(recorder.durationMs / 1000)} 秒</p>
         ) : null}
         {recorder.audioBlob ? (
-          <p className="mt-1 text-xs font-bold text-slate-400">录音会用于本轮转写与评分，不会持久化保存。</p>
+          <p className="mt-1 text-xs font-bold text-slate-400">录音大小约 {Math.ceil(recorder.audioBlob.size / 1024)} KB。录音只用于本轮转写与评分，不会持久化保存。</p>
         ) : null}
+        {recorder.errorMessage && recorder.state === 'stopped' ? <p className="mt-3 rounded-2xl bg-sunshine/20 px-4 py-3 text-xs font-black text-slate-500">{recorder.errorMessage}</p> : null}
         {transcriptionNote && !lastTranscript ? <p className="mt-3 rounded-2xl bg-sky/10 px-4 py-3 text-xs font-black text-slate-500">{transcriptionNote}</p> : null}
         {isProcessingTurn ? (
           <div className="mt-4 rounded-3xl bg-gradient-to-br from-sky/10 to-sunshine/20 p-4 text-left text-sm font-bold leading-6 text-slate-700">
             <p className="font-black text-slate-900">剧场处理中…</p>
-            <p className="mt-1">① 识别你的台词 ② 生成入戏评分 ③ 发放表达卡</p>
+            <p className="mt-1">① 检查录音 ② 识别台词 ③ 生成入戏评分 ④ 发放表达卡</p>
           </div>
         ) : null}
         {showPermissionTip ? (
@@ -247,7 +251,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
           </div>
         ) : null}
         <div className="mt-4 flex justify-center gap-3 text-xs font-bold text-slate-400">
-          <button type="button" onClick={showRescueLine}>显示救场台词</button>
+          <span>上方台词已直接显示</span>
           <button type="button" onClick={triggerStandIn}>AI 助演接替</button>
         </div>
       </div>
@@ -277,7 +281,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
           ) : (
             <div className="rounded-2xl bg-fresh/10 p-4 text-sm leading-6 text-slate-700">
               <p><b>入戏反馈：</b>{state === 'ai_stand_in' ? '这一轮由剧场助演完成，剧情继续推进。' : currentLine.feedback}</p>
-              <p><b>更自然表达：</b>Could you check it for me?</p>
+              <p><b>更自然表达：</b>{currentLine.rescueLine}</p>
               <p><b>剧情反应：</b>{currentLine.reaction}</p>
             </div>
           )}
