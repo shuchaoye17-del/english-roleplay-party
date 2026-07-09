@@ -57,6 +57,9 @@ export default function OnboardingPage() {
             </div>
           ))}
         </div>
+        <a href="/share" className="mt-4 inline-flex text-xs font-black text-slate-600 underline decoration-coral/60 underline-offset-4">
+          先看给朋友的试玩说明 →
+        </a>
       </div>
 
       <Card className="space-y-5">
