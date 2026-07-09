@@ -83,11 +83,15 @@ export default function ResultPage({ params }: { params: { id: string } }) {
 
       <Card className="mt-5 bg-sky/10 text-sm leading-6 text-slate-600">
         <p className="font-black text-slate-900">分享文案</p>
-        <p className="mt-1">我刚用英语演完一局咖啡馆小剧场，拿到“气氛救场王”。你也来试试：3 分钟一局，不会说也有救场台词。</p>
+        <p className="mt-1">我刚用英语演完一局咖啡馆小剧场，拿到“气氛救场王”。你也来试试：3 分钟一局，不会说也有台词提示。</p>
+        <a href="/share" className="mt-3 inline-flex text-xs font-black text-coral underline decoration-coral/60 underline-offset-4">
+          打开试玩邀请页 →
+        </a>
       </Card>
 
       <div className="mt-5 grid gap-3">
         <Button href={`/play/${scenario.id}`}>再来一局</Button>
+        <Button href="/share" className="from-coral to-sunshine text-slate-950">分享给朋友试玩</Button>
         <Button href="/cards" className="from-partyPurple to-sky">查看我的表达卡</Button>
         <Button href="/lobby" className="from-slate-800 to-slate-950">返回大厅</Button>
       </div>
