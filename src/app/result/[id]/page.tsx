@@ -1,7 +1,7 @@
 import { getScenario } from '@/data/scenarios';
 import { expressionCards } from '@/data/expressionCards';
 import { rewards } from '@/data/rewards';
-import { Badge, BottomNav, Button, Card, PhoneShell, ProgressBar } from '@/components/ui';
+import { Badge, BottomNav, Button, Card, PhoneShell, ProgressBar, Sticker } from '@/components/ui';
 import { RewardBadge } from '@/components/RewardBadge';
 import { ExpressionCardView } from '@/components/ExpressionCardView';
 
@@ -20,13 +20,19 @@ export default function ResultPage({ params }: { params: { id: string } }) {
 
   return (
     <PhoneShell className="pb-24">
-      <section className="overflow-hidden rounded-[2rem] bg-gradient-to-br from-sunshine/40 via-coral/20 to-sky/30 p-6 text-center shadow-sm">
-        <div className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-white text-6xl shadow-sm">🏆</div>
-        <Badge className="mt-4 bg-white/80">演绎完成 · 可以截图分享</Badge>
-        <h1 className="mt-4 text-6xl font-black text-slate-900">A</h1>
-        <p className="mt-2 text-sm font-bold text-slate-600">本局团队评级</p>
+      <section className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-gradient-to-br from-sunshine/55 via-coral/35 to-partyPurple/45 p-6 text-center shadow-[0_20px_60px_rgba(167,139,250,0.25)]">
+        <div className="absolute -left-10 top-8 h-24 w-24 rounded-full bg-white/35 blur-xl" />
+        <div className="absolute right-5 top-5 text-3xl">🎊</div>
+        <div className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-white text-6xl shadow-md ring-8 ring-white/60">🏆</div>
+        <Badge className="mt-4 bg-white/85">演绎结束 · 派对评级</Badge>
+        <h1 className="mt-4 text-7xl font-black leading-none text-slate-950">S</h1>
+        <p className="mt-2 text-sm font-black text-slate-700">派对之星！</p>
         <p className="mt-4 text-4xl font-black text-coral">{total}</p>
-        <p className="text-sm font-bold text-slate-600">综合表现分 · 你把咖啡馆尴尬场面接住了</p>
+        <p className="text-sm font-black text-slate-600">综合表现分 · 你把咖啡馆尴尬场面接住了</p>
+        <div className="mt-4 flex justify-center gap-2">
+          <Sticker>截图分享</Sticker>
+          <Sticker className="rotate-1 bg-sky">挑战好友</Sticker>
+        </div>
         <div className="mt-5 grid grid-cols-3 gap-3">
           <RewardBadge icon="⭐" label="EXP" value={`+${rewards.exp}`} />
           <RewardBadge icon="🪙" label="金币" value={`+${rewards.coins}`} />
@@ -39,7 +45,7 @@ export default function ResultPage({ params }: { params: { id: string } }) {
           <h2 className="text-lg font-black text-slate-900">本局称号</h2>
           <span className="text-3xl">🎭</span>
         </div>
-        <div className="rounded-3xl bg-partyPurple/10 p-4 text-center">
+        <div className="rounded-3xl bg-partyPurple/10 p-4 text-center ring-1 ring-partyPurple/10">
           <p className="text-2xl font-black text-slate-900">气氛救场王</p>
           <p className="mt-2 text-sm leading-6 text-slate-600">你用礼貌又自然的表达，把“拿错饮品”的尴尬场面接住了。适合发给朋友挑战同一局。</p>
         </div>
@@ -52,7 +58,7 @@ export default function ResultPage({ params }: { params: { id: string } }) {
         </div>
         {scores.map((score) => (
           <div key={score.label}>
-            <div className="mb-2 flex items-center justify-between text-sm font-bold text-slate-700">
+            <div className="mb-2 flex items-center justify-between text-sm font-black text-slate-700">
               <span>{score.label}</span>
               <span>{score.value}</span>
             </div>
@@ -82,8 +88,8 @@ export default function ResultPage({ params }: { params: { id: string } }) {
 
       <div className="mt-5 grid gap-3">
         <Button href={`/play/${scenario.id}`}>再来一局</Button>
-        <Button href="/cards" className="bg-partyPurple">查看我的表达卡</Button>
-        <Button href="/lobby" className="bg-slate-900">返回大厅</Button>
+        <Button href="/cards" className="from-partyPurple to-sky">查看我的表达卡</Button>
+        <Button href="/lobby" className="from-slate-800 to-slate-950">返回大厅</Button>
       </div>
       <BottomNav />
     </PhoneShell>
