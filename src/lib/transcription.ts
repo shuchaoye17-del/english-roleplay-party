@@ -9,19 +9,22 @@ export type TranscriptionResult = {
   audioSize?: number;
 };
 
-const localFallback: TranscriptionResult = {
-  transcript: "Sorry, I think this isn't what I ordered.",
-  durationMs: 0,
-  confidence: 0.7,
-  source: 'mock_fallback',
-  message: '转写服务暂时没有接住，先用模拟台词继续。'
-};
+function localFallback(fallbackTranscript: string, durationMs = 0): TranscriptionResult {
+  return {
+    transcript: fallbackTranscript,
+    durationMs,
+    confidence: 0.7,
+    source: 'mock_fallback',
+    message: '转写服务暂时没有接住，先用本轮示范台词继续。'
+  };
+}
 
-export async function transcribeAudio(audioBlob: Blob, durationMs = 0): Promise<TranscriptionResult> {
+export async function transcribeAudio(audioBlob: Blob, durationMs = 0, fallbackTranscript = "Sorry, I think this isn't what I ordered."): Promise<TranscriptionResult> {
   try {
     const formData = new FormData();
     formData.append('audio', audioBlob, 'roleplay-turn.webm');
     formData.append('durationMs', String(durationMs));
+    formData.append('fallbackTranscript', fallbackTranscript);
 
     const response = await fetch('/api/transcribe', {
       method: 'POST',
@@ -29,19 +32,19 @@ export async function transcribeAudio(audioBlob: Blob, durationMs = 0): Promise<
     });
 
     if (!response.ok) {
-      return localFallback;
+      return localFallback(fallbackTranscript, durationMs);
     }
 
     const result = (await response.json()) as TranscriptionResult;
     return {
-      transcript: result.transcript || localFallback.transcript,
+      transcript: result.transcript || fallbackTranscript,
       durationMs: result.durationMs ?? durationMs,
-      confidence: result.confidence ?? localFallback.confidence,
+      confidence: result.confidence ?? 0.7,
       source: result.source ?? 'mock_fallback',
       message: result.message,
       audioSize: result.audioSize
     };
   } catch {
-    return localFallback;
+    return localFallback(fallbackTranscript, durationMs);
   }
 }
