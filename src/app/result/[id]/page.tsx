@@ -1,101 +1,294 @@
-import { getScenario } from '@/data/scenarios';
-import { expressionCards } from '@/data/expressionCards';
-import { rewards } from '@/data/rewards';
-import { Badge, BottomNav, Button, Card, PhoneShell, ProgressBar, Sticker } from '@/components/ui';
-import { RewardBadge } from '@/components/RewardBadge';
-import { ExpressionCardView } from '@/components/ExpressionCardView';
+'use client';
 
-const scores = [
-  { label: '入戏程度', value: 92, hint: '像角色本人在说话' },
-  { label: '情绪匹配', value: 88, hint: '礼貌但有点不满' },
-  { label: '发音清晰', value: 81, hint: '听感清楚，可继续提升' },
-  { label: '英文自然', value: 86, hint: '表达像真实场景' },
-  { label: '剧情推进', value: 90, hint: '把故事往前推了' },
-  { label: '团队配合', value: 84, hint: '别人容易接下一句' }
+import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import { getScenario } from '@/data/scenarios';
+import { mockTurnScore } from '@/lib/scoring';
+import { getLatestRunSummary, type LatestRunSummary } from '@/lib/storage';
+
+type Dimension = {
+  label: string;
+  value: number;
+  color: string;
+};
+
+const playerAvatars = [
+  { name: 'Lily', src: '/play-implementation-preview/avatar-lily.webp', color: '#ff5e58' },
+  { name: 'Ethan', src: '/play-implementation-preview/avatar-ethan.webp', color: '#3f8cff' },
+  { name: 'Mia', src: '/play-implementation-preview/avatar-mia.webp', color: '#8e63ff' },
+  { name: 'Jason', src: '/play-implementation-preview/avatar-jason.webp', color: '#28c269' }
 ];
+
+const fallbackResult: LatestRunSummary = {
+  scenarioId: 'cafe-chaos',
+  score: 93,
+  title: 'S-Scene Saver',
+  completedAt: '',
+  expressionCards: ['Surprised']
+};
+
+function clampScore(value: number) {
+  return Math.min(100, Math.max(0, Math.round(value)));
+}
+
+function getRating(score: number) {
+  if (score >= 92) {
+    return { letter: 'S', title: 'Scene Saver', fullTitle: 'S-Scene Saver' };
+  }
+
+  if (score >= 84) {
+    return { letter: 'A', title: 'Role Energy', fullTitle: 'A-Role Energy' };
+  }
+
+  return { letter: 'B', title: 'Story Spark', fullTitle: 'B-Story Spark' };
+}
+
+function buildDimensions(score: number): Dimension[] {
+  const expression = clampScore(Math.max(mockTurnScore.emotionMatch, score));
+  const flow = clampScore(Math.round((mockTurnScore.englishNaturalness + mockTurnScore.pronunciationClarity) / 2));
+  const acting = clampScore(Math.round((mockTurnScore.roleImmersion + mockTurnScore.storyProgress) / 2));
+
+  return [
+    { label: 'Expression 表达力', value: expression, color: '#ff5e58' },
+    { label: 'Flow 流利度', value: Math.max(flow, score - 6), color: '#3f8cff' },
+    { label: 'Acting 角色感', value: Math.max(acting, score - 3), color: '#8e63ff' }
+  ];
+}
+
+function useResultSummary(scenarioId: string) {
+  const [latestRun, setLatestRun] = useState<LatestRunSummary | null>(null);
+
+  useEffect(() => {
+    setLatestRun(getLatestRunSummary());
+  }, []);
+
+  return latestRun?.scenarioId === scenarioId ? latestRun : null;
+}
+
+function Confetti() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+      <span className="absolute left-7 top-20 h-3 w-8 rotate-[-18deg] rounded-full bg-[#ffd65d]" />
+      <span className="absolute right-9 top-28 h-3 w-3 rounded-full bg-[#3f8cff]" />
+      <span className="absolute left-12 top-[270px] h-3 w-3 rotate-12 rounded-sm bg-[#28c269]" />
+      <span className="absolute right-14 top-[238px] h-2 w-7 rotate-12 rounded-full bg-[#ff5e58]" />
+      <span className="absolute left-1/2 top-14 h-2 w-2 rounded-sm bg-[#8e63ff]" />
+    </div>
+  );
+}
+
+function AvatarStack() {
+  return (
+    <div className="flex items-center justify-center">
+      {playerAvatars.map((avatar, index) => (
+        <div
+          key={avatar.name}
+          className="-ml-3 first:ml-0"
+          style={{ zIndex: playerAvatars.length - index }}
+        >
+          <div
+            className="relative h-[58px] w-[58px] overflow-hidden rounded-full border-[4px] bg-white shadow-[0_8px_18px_rgba(15,23,42,0.14)]"
+            style={{ borderColor: avatar.color }}
+          >
+            <Image src={avatar.src} alt={avatar.name} fill sizes="58px" className="object-cover" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ScoreBadge({ score, letter, title }: { score: number; letter: string; title: string }) {
+  return (
+    <div className="relative mx-auto mt-6 grid h-[154px] w-[154px] place-items-center rounded-full bg-white shadow-[0_18px_34px_rgba(255,94,88,0.20)]">
+      <div className="absolute inset-2 rounded-full border-[10px] border-[#ff6f67]" />
+      <div className="absolute inset-[22px] rounded-full border-[6px] border-[#ffd65d]" />
+      <div className="relative text-center">
+        <p className="text-[50px] font-black leading-none text-[#ff5e58]">{letter}</p>
+        <p className="mt-1 text-[13px] font-black uppercase tracking-normal text-[#111827]">{title}</p>
+        <p className="mt-1 text-[18px] font-black text-[#111827]">{score}</p>
+      </div>
+    </div>
+  );
+}
+
+function DimensionCard({ dimension }: { dimension: Dimension }) {
+  return (
+    <section className="rounded-[20px] border border-[#e9edf3] bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.07)]">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-[14px] font-black leading-tight text-[#111827]">{dimension.label}</h3>
+        <span className="text-[20px] font-black text-[#111827]">{dimension.value}</span>
+      </div>
+      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-[#eef2f8]">
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${dimension.value}%`, backgroundColor: dimension.color }}
+        />
+      </div>
+    </section>
+  );
+}
+
+function EarnedCard({ title }: { title: string }) {
+  return (
+    <section className="mx-4 mt-4 rounded-[22px] border-2 border-[#28c269] bg-white p-3 shadow-[0_12px_28px_rgba(40,194,105,0.13)]">
+      <div className="flex items-center gap-4">
+        <div className="relative h-[92px] w-[92px] shrink-0 overflow-hidden rounded-[16px]">
+          <Image
+            src="/play-implementation-preview/reward-thumb.webp"
+            alt="Earned expression card"
+            fill
+            sizes="92px"
+            className="object-cover"
+          />
+          <div className="absolute left-2 top-2 rounded-full bg-[#ff5e58] px-2 py-0.5 text-[10px] font-black uppercase text-white">
+            New
+          </div>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-black text-[#18a655]">Expression Card Earned</p>
+          <div className="mt-1 flex items-center gap-2">
+            <h2 className="truncate text-[25px] font-black leading-none text-[#111827]">{title}</h2>
+            <span className="rounded-full bg-[#28c269] px-2 py-0.5 text-[11px] font-black text-white">
+              New
+            </span>
+          </div>
+          <p className="mt-2 text-[13px] font-bold leading-snug text-[#5f6878]">
+            You sounded natural in a tense scene.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PrimaryLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="flex h-[58px] flex-1 items-center justify-center rounded-full bg-[#ff5e58] px-5 text-center text-[16px] font-black text-white shadow-[0_12px_24px_rgba(255,94,88,0.22)] transition active:scale-95"
+    >
+      {children}
+    </Link>
+  );
+}
+
+function SecondaryLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="flex h-[58px] flex-1 items-center justify-center rounded-full bg-[#111827] px-5 text-center text-[16px] font-black text-white shadow-[0_12px_24px_rgba(17,24,39,0.13)] transition active:scale-95"
+    >
+      {children}
+    </Link>
+  );
+}
 
 export default function ResultPage({ params }: { params: { id: string } }) {
   const scenario = getScenario(params.id);
-  const total = Math.round(scores.reduce((sum, item) => sum + item.value, 0) / scores.length);
+  const latestRun = useResultSummary(scenario.id);
+  const result = latestRun ?? fallbackResult;
+
+  const score = clampScore(result.score || fallbackResult.score);
+  const rating = getRating(score);
+  const dimensions = useMemo(() => buildDimensions(score), [score]);
+  const earnedCard = result.expressionCards[0] || fallbackResult.expressionCards[0];
 
   return (
-    <PhoneShell className="pb-24">
-      <section className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-gradient-to-br from-sunshine/55 via-coral/35 to-partyPurple/45 p-6 text-center shadow-[0_20px_60px_rgba(167,139,250,0.25)]">
-        <div className="absolute -left-10 top-8 h-24 w-24 rounded-full bg-white/35 blur-xl" />
-        <div className="absolute right-5 top-5 text-3xl">🎊</div>
-        <div className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-white text-6xl shadow-md ring-8 ring-white/60">🏆</div>
-        <Badge className="mt-4 bg-white/85">演绎结束 · 派对评级</Badge>
-        <h1 className="mt-4 text-7xl font-black leading-none text-slate-950">S</h1>
-        <p className="mt-2 text-sm font-black text-slate-700">派对之星！</p>
-        <p className="mt-4 text-4xl font-black text-coral">{total}</p>
-        <p className="text-sm font-black text-slate-600">综合表现分 · 你把咖啡馆尴尬场面接住了</p>
-        <div className="mt-4 flex justify-center gap-2">
-          <Sticker>截图分享</Sticker>
-          <Sticker className="rotate-1 bg-sky">挑战好友</Sticker>
-        </div>
-        <div className="mt-5 grid grid-cols-3 gap-3">
-          <RewardBadge icon="⭐" label="EXP" value={`+${rewards.exp}`} />
-          <RewardBadge icon="🪙" label="金币" value={`+${rewards.coins}`} />
-          <RewardBadge icon="💎" label="宝石" value={`+${rewards.gems}`} />
-        </div>
-      </section>
+    <main className="min-h-screen bg-[#edf5fb] px-3 py-4 text-[#111827]">
+      <div className="relative mx-auto w-full max-w-[550px] overflow-hidden bg-[#f8f9fb] shadow-[0_20px_60px_rgba(15,23,42,0.16)]">
+        <Confetti />
 
-      <Card className="mt-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-black text-slate-900">本局称号</h2>
-          <span className="text-3xl">🎭</span>
-        </div>
-        <div className="rounded-3xl bg-partyPurple/10 p-4 text-center ring-1 ring-partyPurple/10">
-          <p className="text-2xl font-black text-slate-900">气氛救场王</p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">你用礼貌又自然的表达，把“拿错饮品”的尴尬场面接住了。适合发给朋友挑战同一局。</p>
-        </div>
-      </Card>
-
-      <Card className="mt-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-black text-slate-900">六维评分</h2>
-          <Badge className="bg-fresh/20">不是考试，是入戏值</Badge>
-        </div>
-        {scores.map((score) => (
-          <div key={score.label}>
-            <div className="mb-2 flex items-center justify-between text-sm font-black text-slate-700">
-              <span>{score.label}</span>
-              <span>{score.value}</span>
-            </div>
-            <ProgressBar value={score.value} />
-            <p className="mt-1 text-xs font-bold text-slate-400">{score.hint}</p>
+        <header className="relative z-10 flex h-[58px] items-center gap-3 px-3">
+          <Link
+            href="/lobby"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-2xl font-black text-[#111827] shadow-[0_5px_14px_rgba(15,23,42,0.16)]"
+            aria-label="Back to story hall"
+          >
+            &lt;
+          </Link>
+          <div className="min-w-0 flex-1">
+            <p className="text-[18px] font-black leading-none text-[#111827]">Scene Complete</p>
+            <p className="mt-1 text-[13px] font-bold text-[#6c7482]">The Missing Birthday Cake</p>
           </div>
-        ))}
-      </Card>
+          <span className="rounded-full bg-white px-3 py-1 text-[12px] font-black text-[#8e63ff] shadow-sm">
+            Result
+          </span>
+        </header>
 
-      <Card className="mt-5 space-y-3">
-        <Badge className="bg-sky/20">本局高光台词</Badge>
-        <p className="text-xl font-black text-slate-900">“Sorry, I think this isn&apos;t what I ordered.”</p>
-        <p className="text-sm leading-6 text-slate-600">简单、自然，而且很符合“礼貌但有点不满”的角色状态。下一次可以试试更委婉的升级版：Could you check it for me?</p>
-      </Card>
+        <section className="relative z-10 mx-4 mt-1 overflow-hidden rounded-[28px] bg-white px-5 pb-5 pt-6 shadow-[0_12px_32px_rgba(15,23,42,0.12)]">
+          <div className="absolute left-0 top-0 h-2 w-full bg-[#ff5e58]" />
+          <div className="text-center">
+            <p className="text-[22px] font-black leading-none text-[#111827]">演出完成</p>
+            <p className="mt-1 text-[13px] font-black uppercase tracking-normal text-[#7c8493]">
+              Scene Complete
+            </p>
+          </div>
+          <div className="mt-5">
+            <AvatarStack />
+          </div>
+          <ScoreBadge score={score} letter={rating.letter} title={rating.title} />
+          <p className="mt-4 text-center text-[20px] font-black text-[#111827]">{rating.fullTitle}</p>
+          <p className="mx-auto mt-2 max-w-[340px] text-center text-[14px] font-bold leading-relaxed text-[#5f6878]">
+            你把故事接住了，也把角色演出来了。
+          </p>
+          <div className="mt-5 rounded-[18px] bg-[#fff4d9] px-4 py-3 text-center">
+            <p className="text-[12px] font-black uppercase tracking-normal text-[#b0761d]">Party recap</p>
+            <p className="mt-1 text-[14px] font-black text-[#111827]">
+              Lily helped the team save the birthday scene.
+            </p>
+          </div>
+        </section>
 
-      <Card className="mt-5 space-y-4">
-        <h2 className="text-lg font-black text-slate-900">获得表达卡</h2>
-        {expressionCards.map((card) => (
-          <ExpressionCardView key={card.id} card={card} compact />
-        ))}
-      </Card>
+        <section className="relative z-10 mx-4 mt-4 grid gap-3">
+          {dimensions.map((dimension) => (
+            <DimensionCard key={dimension.label} dimension={dimension} />
+          ))}
+        </section>
 
-      <Card className="mt-5 bg-sky/10 text-sm leading-6 text-slate-600">
-        <p className="font-black text-slate-900">分享文案</p>
-        <p className="mt-1">我刚用英语演完一局咖啡馆小剧场，拿到“气氛救场王”。你也来试试：3 分钟一局，不会说也有台词提示。</p>
-        <a href="/share" className="mt-3 inline-flex text-xs font-black text-coral underline decoration-coral/60 underline-offset-4">
-          打开试玩邀请页 →
-        </a>
-      </Card>
+        <section className="relative z-10 mx-4 mt-4 rounded-[22px] bg-white p-5 shadow-[0_10px_26px_rgba(15,23,42,0.09)]">
+          <div className="mb-3 inline-flex rounded-full bg-[#eef6ff] px-3 py-1 text-[12px] font-black text-[#2563eb]">
+            Best line
+          </div>
+          <p className="text-[24px] font-black leading-tight text-[#111827]">
+            &ldquo;Wait, where did the cake go? I was watching it!&rdquo;
+          </p>
+          <p className="mt-3 text-[13px] font-bold leading-relaxed text-[#5f6878]">
+            The line lands fast, sounds surprised, and gives the team a clear next move.
+          </p>
+        </section>
 
-      <div className="mt-5 grid gap-3">
-        <Button href={`/play/${scenario.id}`}>再来一局</Button>
-        <Button href="/share" className="from-coral to-sunshine text-slate-950">分享给朋友试玩</Button>
-        <Button href="/cards" className="from-partyPurple to-sky">查看我的表达卡</Button>
-        <Button href="/lobby" className="from-slate-800 to-slate-950">返回大厅</Button>
+        <EarnedCard title={earnedCard} />
+
+        <section className="relative z-10 mx-4 mt-4 rounded-[22px] border border-[#e9edf3] bg-white p-4 shadow-[0_10px_26px_rgba(15,23,42,0.08)]">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[15px] font-black text-[#111827]">Share snapshot</p>
+              <p className="mt-1 text-[13px] font-bold leading-snug text-[#6c7482]">
+                A bright replay card for your English roleplay moment.
+              </p>
+            </div>
+            <div className="rounded-[18px] bg-[#eef6ff] px-4 py-3 text-center">
+              <p className="text-[30px] font-black leading-none text-[#ff5e58]">{rating.letter}</p>
+              <p className="mt-1 text-[10px] font-black uppercase text-[#111827]">Party score</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="relative z-10 mx-4 mt-5 pb-8">
+          <div className="flex gap-3">
+            <PrimaryLink href={`/play/${scenario.id}`}>再演一局 Play Again</PrimaryLink>
+            <SecondaryLink href="/share">分享战绩 Share Result</SecondaryLink>
+          </div>
+          <Link
+            href="/lobby"
+            className="mx-auto mt-4 block w-fit rounded-full px-4 py-2 text-[13px] font-black text-[#7c8493]"
+          >
+            回到故事大厅 Back to Story Hall
+          </Link>
+        </section>
       </div>
-      <BottomNav />
-    </PhoneShell>
+    </main>
   );
 }
