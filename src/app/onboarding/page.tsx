@@ -16,8 +16,8 @@ const proofPills = ['3 分钟', '语音开演', 'AI 队友'];
 
 const steps = [
   {
-    title: '选一个角色',
-    copy: 'Pick a role before the scene starts.',
+    title: '拿到你的角色',
+    copy: 'Meet your character before the scene starts.',
     color: '#ff5e58'
   },
   {
@@ -163,7 +163,7 @@ export default function OnboardingPage() {
             用英语演故事，边玩边练口语。
           </p>
           <p className="mt-3 max-w-[430px] text-[15px] font-bold leading-relaxed text-[#5f6878]">
-            选个角色，读一句台词，AI 队友会把故事接下去。
+            拿到一个角色，读一句台词，AI 队友会把故事接下去。
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -185,7 +185,7 @@ export default function OnboardingPage() {
             </button>
             <div className="mt-3 flex items-center justify-center gap-2 text-[13px] font-black text-[#ff5e58]">
               <span className="h-2 w-2 rounded-full bg-[#ff5e58]" />
-              Tap to speak · Start a mini scene
+              Start the scene · Then tap to speak
             </div>
             <a
               href="#how-it-works"
