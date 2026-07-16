@@ -17,6 +17,7 @@ export type PlayImplementationVoiceState = {
   note: string;
   color: string;
   dot: string;
+  active?: boolean;
 };
 
 export type PlayImplementationReward = {
@@ -36,8 +37,11 @@ export type PlayImplementationScreenProps = {
   players?: PlayImplementationPlayer[];
   stageSrc?: string;
   stageAlt?: string;
+  directorTipTitle?: string;
+  directorTipText?: string;
   lineLabel?: string;
   lineText?: string;
+  roleHint?: string;
   instructionText?: string;
   micLabel?: string;
   isRecording?: boolean;
@@ -45,8 +49,10 @@ export type PlayImplementationScreenProps = {
   hintsLabel?: string;
   hintsCount?: number;
   voiceStates?: PlayImplementationVoiceState[];
+  voiceStateMode?: "all" | "current";
   reward?: PlayImplementationReward;
   navItems?: { label: string; tone?: "default" | "danger"; hasNotification?: boolean }[];
+  bottomNavTone?: "full" | "quiet";
   onBack?: () => void;
   onAudio?: () => void;
   onMenu?: () => void;
@@ -109,6 +115,7 @@ const defaultVoiceStates: PlayImplementationVoiceState[] = [
     note: "0:03",
     color: "border-[#ff5e58] bg-white text-[#111827]",
     dot: "bg-[#ff5e58]",
+    active: true,
   },
   {
     title: "Processing",
@@ -197,7 +204,7 @@ function TopBar({
         <div className="truncate text-[18px] font-black leading-none text-[#111827]">
           {title}
         </div>
-        <div className="mt-1 flex items-center gap-3">
+          <div className="mt-1 flex items-center gap-2 min-[520px]:gap-3">
           <span className="text-[13px] font-semibold text-[#6c7482]">
             {sceneLabel}
           </span>
@@ -205,7 +212,7 @@ function TopBar({
             {Array.from({ length: progressSegments }).map((_, item) => (
               <span
                 key={item}
-                className={`h-[5px] w-[38px] rounded-full ${
+                className={`h-[5px] w-[24px] rounded-full min-[520px]:w-[38px] ${
                   item < activeProgressSegments ? "bg-[#ff4d5f]" : "bg-[#e0e5ee]"
                 }`}
               />
@@ -234,12 +241,12 @@ function TopBar({
 
 function PlayerStrip({ players }: { players: PlayImplementationPlayer[] }) {
   return (
-    <section className="mx-3 flex h-[158px] items-center justify-between rounded-[18px] bg-white px-5 shadow-[0_7px_24px_rgba(15,23,42,0.13)]">
+    <section className="mx-3 flex h-[158px] items-center justify-start gap-4 overflow-x-auto rounded-[18px] bg-white px-4 shadow-[0_7px_24px_rgba(15,23,42,0.13)] [scrollbar-width:none] min-[520px]:justify-between min-[520px]:px-5 [&::-webkit-scrollbar]:hidden">
       {players.map((player) => (
-        <div key={player.name} className="relative flex w-[80px] flex-col items-center">
+        <div key={player.name} className="relative flex w-[78px] shrink-0 flex-col items-center min-[520px]:w-[80px]">
           {player.badge ? (
             <span
-              className={`absolute -top-5 z-20 rounded-md px-2 py-0.5 text-[11px] font-black text-white ${
+              className={`absolute -top-4 z-20 rounded-md px-2 py-0.5 text-[11px] font-black text-white ${
                 player.active ? "bg-[#ff4d5f]" : "bg-[#7757ff]"
               }`}
             >
@@ -288,7 +295,17 @@ function PlayerStrip({ players }: { players: PlayImplementationPlayer[] }) {
   );
 }
 
-function Stage({ src, alt }: { src: string; alt: string }) {
+function Stage({
+  src,
+  alt,
+  directorTipTitle,
+  directorTipText,
+}: {
+  src: string;
+  alt: string;
+  directorTipTitle?: string;
+  directorTipText?: string;
+}) {
   return (
     <section className="relative mt-0 h-[235px] overflow-hidden">
       <Image
@@ -299,6 +316,16 @@ function Stage({ src, alt }: { src: string; alt: string }) {
         priority
         className="h-full w-full object-cover"
       />
+      {directorTipText ? (
+        <div className="absolute right-11 top-[88px] max-w-[116px] rounded-[14px] bg-white/92 px-3 py-2 shadow-[0_8px_20px_rgba(15,23,42,0.12)] backdrop-blur-sm">
+          <div className="mb-1 inline-flex rounded-full bg-[#ffd65d] px-2 py-0.5 text-[10px] font-black text-[#6b4d16]">
+            {directorTipTitle ?? "Director Tip"}
+          </div>
+          <p className="text-[11px] font-bold leading-tight text-[#263143]">
+            {directorTipText}
+          </p>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -306,27 +333,42 @@ function Stage({ src, alt }: { src: string; alt: string }) {
 function LineCard({
   lineLabel,
   lineText,
+  roleHint,
   instructionText,
 }: {
   lineLabel: string;
   lineText: string;
+  roleHint?: string;
   instructionText: string;
 }) {
   return (
-    <section className="relative -mt-px mx-3 h-[232px] rounded-[24px] bg-white px-7 pt-5 shadow-[0_8px_24px_rgba(15,23,42,0.14)]">
+    <section className="relative -mt-px mx-3 h-[260px] rounded-[24px] bg-white px-7 pt-5 shadow-[0_8px_24px_rgba(15,23,42,0.14)] min-[520px]:h-[232px]">
       <div className="flex items-center gap-3">
         <span className="rounded-full bg-[#fff4d9] px-3 py-1 text-[14px] font-black text-[#1f2937]">
           {lineLabel}
         </span>
         <span className="h-[5px] w-14 rounded-full bg-[#ffd158]" />
       </div>
-      <p className="mt-5 max-w-[430px] text-[33px] font-black leading-[1.14] tracking-normal text-[#111827]">
+      <p className="mt-5 max-w-[430px] text-[28px] font-black leading-[1.12] tracking-normal text-[#111827] min-[520px]:text-[33px] min-[520px]:leading-[1.14]">
         {lineText}
       </p>
-      <div className="mt-4 h-px w-[300px] border-t border-dotted border-[#ffced1]" />
-      <div className="absolute bottom-8 left-7 rounded-full bg-[#fff2d7] px-3 py-2 text-[12px] font-bold text-[#6b4d16]">
-        {instructionText}
-      </div>
+      {roleHint ? (
+        <p className="relative z-10 mt-3 max-w-[300px] rounded-full bg-[#fff4d9] px-3 py-1.5 text-[12px] font-bold leading-tight text-[#8a4b2c] min-[520px]:max-w-[400px] min-[520px]:text-[13px]">
+          {roleHint}
+        </p>
+      ) : null}
+      {roleHint ? (
+        <div className="relative z-10 mt-2 inline-block rounded-full bg-[#fff2d7] px-3 py-2 text-[12px] font-bold text-[#6b4d16]">
+          {instructionText}
+        </div>
+      ) : (
+        <>
+          <div className="mt-4 h-px w-[300px] border-t border-dotted border-[#ffced1]" />
+          <div className="absolute bottom-8 left-7 rounded-full bg-[#fff2d7] px-3 py-2 text-[12px] font-bold text-[#6b4d16]">
+            {instructionText}
+          </div>
+        </>
+      )}
       <div className="absolute bottom-6 right-0 flex h-[118px] w-[130px] items-center justify-center gap-2 opacity-50">
         {[12, 26, 44, 70, 96, 118].map((height, index) => (
           <span
@@ -364,7 +406,7 @@ function MicDock({
       <button
         type="button"
         onClick={onListenAgain}
-        className="absolute left-[68px] top-[22px] flex flex-col items-center gap-3"
+        className="absolute left-[40px] top-[22px] flex flex-col items-center gap-3 min-[520px]:left-[68px]"
       >
         <span className="grid h-[62px] w-[62px] place-items-center rounded-full border border-[#e0e5ee] bg-white shadow-sm">
           <span className="h-7 w-7 rounded-full border-[4px] border-[#8b94a3]" />
@@ -394,7 +436,7 @@ function MicDock({
       <button
         type="button"
         onClick={onHints}
-        className="absolute right-[79px] top-[22px] flex flex-col items-center gap-3"
+        className="absolute right-[40px] top-[22px] flex flex-col items-center gap-3 min-[520px]:right-[79px]"
       >
         <span className="relative grid h-[62px] w-[62px] place-items-center rounded-full border border-[#e0e5ee] bg-white shadow-sm">
           <span className="h-8 w-8 rounded-full bg-[#ffd65d]" />
@@ -404,7 +446,7 @@ function MicDock({
             </span>
           ) : null}
         </span>
-        <span className="text-[14px] font-semibold text-[#7c8493]">{hintsLabel}</span>
+        <span className="max-w-[86px] text-center text-[14px] font-semibold leading-tight text-[#7c8493]">{hintsLabel}</span>
       </button>
     </section>
   );
@@ -453,6 +495,31 @@ function VoiceStates({ voiceStates }: { voiceStates: PlayImplementationVoiceStat
   );
 }
 
+function CurrentVoiceState({ voiceStates }: { voiceStates: PlayImplementationVoiceState[] }) {
+  const currentState = voiceStates.find((state) => state.active) ?? voiceStates[0];
+
+  return (
+    <section className="mx-3">
+      <div className="mb-3 flex items-center justify-center gap-3 text-[14px] font-bold text-[#7c8493]">
+        <span className="h-px w-5 bg-[#98a2b3]" />
+        Voice Status
+        <span className="h-px w-5 bg-[#98a2b3]" />
+      </div>
+      <div className={`flex h-[82px] items-center gap-4 rounded-[18px] border px-5 shadow-[0_5px_16px_rgba(15,23,42,0.09)] ${currentState.color}`}>
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#f3f6fb]">
+          <span className={`h-8 w-8 rounded-full ${currentState.dot}`} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[16px] font-black leading-tight">{currentState.title}</div>
+          <div className="mt-1 text-[13px] font-bold leading-tight text-[#5f6878]">
+            {currentState.note}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function RewardCard({
   reward,
   onViewReward,
@@ -462,7 +529,7 @@ function RewardCard({
 }) {
   return (
     <section className="mx-3 mt-5 flex h-[113px] items-center rounded-[14px] border-2 border-[#28c269] bg-white px-3 shadow-sm">
-      <div className="relative h-[92px] w-[99px] shrink-0 overflow-hidden rounded-lg">
+      <div className="relative h-[78px] w-[78px] shrink-0 overflow-hidden rounded-lg min-[520px]:h-[92px] min-[520px]:w-[99px]">
         <Image
           src={reward.imageSrc}
           alt="Surprised expression card"
@@ -471,12 +538,12 @@ function RewardCard({
           className="h-full w-full object-cover"
         />
       </div>
-      <div className="ml-4 min-w-0 flex-1">
-        <div className="text-[16px] font-black text-[#18a655]">
+      <div className="ml-3 min-w-0 flex-1 overflow-hidden min-[520px]:ml-4">
+        <div className="truncate text-[14px] font-black text-[#18a655] min-[520px]:text-[16px]">
           {reward.eyebrow}
         </div>
         <div className="mt-2 flex items-center gap-2">
-          <span className="text-[22px] font-black leading-none text-[#111827]">
+          <span className="truncate text-[20px] font-black leading-none text-[#111827] min-[520px]:text-[22px]">
             {reward.title}
           </span>
           <span className="rounded-full bg-[#28c269] px-2 py-0.5 text-[11px] font-black text-white">
@@ -490,7 +557,7 @@ function RewardCard({
       <button
         type="button"
         onClick={onViewReward}
-        className="ml-2 h-[52px] rounded-full bg-[#36c765] px-5 py-3 text-[14px] font-black text-white shadow-[0_8px_16px_rgba(54,199,101,0.22)]"
+        className="ml-2 h-[52px] shrink-0 rounded-full bg-[#36c765] px-4 py-3 text-[14px] font-black text-white shadow-[0_8px_16px_rgba(54,199,101,0.22)] min-[520px]:px-5"
       >
         {reward.actionLabel}
       </button>
@@ -500,16 +567,22 @@ function RewardCard({
 
 function BottomNav({
   navItems,
+  tone,
 }: {
   navItems: { label: string; tone?: "default" | "danger"; hasNotification?: boolean }[];
+  tone: "full" | "quiet";
 }) {
   return (
-    <nav className="absolute bottom-0 left-0 right-0 flex h-[47px] items-center justify-around border-t border-[#e9edf3] bg-white text-[13px] font-semibold text-[#111827]">
+    <nav
+      className={`absolute bottom-0 left-0 right-0 flex items-center justify-around border-t border-[#e9edf3] bg-white text-[13px] font-semibold text-[#111827] ${
+        tone === "quiet" ? "h-[42px] bg-white/82 text-[12px] text-[#98a2b3]" : "h-[47px]"
+      }`}
+    >
       {navItems.map((item) => (
         <button
           key={item.label}
           type="button"
-          className={`relative ${item.tone === "danger" ? "text-[#ff4d5f]" : ""}`}
+          className={`relative ${item.tone === "danger" && tone === "full" ? "text-[#ff4d5f]" : ""}`}
         >
           {item.label}
           {item.hasNotification ? (
@@ -529,8 +602,11 @@ export function PlayImplementationScreen({
   players = defaultPlayers,
   stageSrc = "/play-implementation-preview/stage.webp",
   stageAlt = "Birthday cafe stage with Lily character",
+  directorTipTitle,
+  directorTipText,
   lineLabel = "Your Line",
   lineText = "Wait, where did the cake go? I was watching it!",
+  roleHint,
   instructionText = "It's your turn! Tap the mic and say the line above.",
   micLabel = "Tap to speak",
   isRecording = true,
@@ -538,8 +614,10 @@ export function PlayImplementationScreen({
   hintsLabel = "Hints",
   hintsCount = 2,
   voiceStates = defaultVoiceStates,
+  voiceStateMode = "all",
   reward = defaultReward,
   navItems = defaultNavItems,
+  bottomNavTone = "full",
   onBack,
   onAudio,
   onMenu,
@@ -554,7 +632,7 @@ export function PlayImplementationScreen({
         English Roleplay Party Play implementation preview. Prototype only - not
         production UI.
       </h1>
-      <div className="relative min-h-[1176px] w-[550px] overflow-hidden bg-[#f8f9fb] text-[#111827] shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
+      <div className="relative min-h-[1176px] w-full max-w-[550px] overflow-hidden bg-[#f8f9fb] text-[#111827] shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
         <TopBar
           title={title}
           sceneLabel={sceneLabel}
@@ -565,10 +643,16 @@ export function PlayImplementationScreen({
           onMenu={onMenu}
         />
         <PlayerStrip players={players} />
-        <Stage src={stageSrc} alt={stageAlt} />
+        <Stage
+          src={stageSrc}
+          alt={stageAlt}
+          directorTipTitle={directorTipTitle}
+          directorTipText={directorTipText}
+        />
         <LineCard
           lineLabel={lineLabel}
           lineText={lineText}
+          roleHint={roleHint}
           instructionText={instructionText}
         />
         <MicDock
@@ -581,9 +665,13 @@ export function PlayImplementationScreen({
           onMicClick={onMicClick}
           onHints={onHints}
         />
-        <VoiceStates voiceStates={voiceStates} />
+        {voiceStateMode === "current" ? (
+          <CurrentVoiceState voiceStates={voiceStates} />
+        ) : (
+          <VoiceStates voiceStates={voiceStates} />
+        )}
         <RewardCard reward={reward} onViewReward={onViewReward} />
-        <BottomNav navItems={navItems} />
+        <BottomNav navItems={navItems} tone={bottomNavTone} />
       </div>
     </main>
   );

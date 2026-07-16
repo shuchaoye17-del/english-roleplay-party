@@ -78,6 +78,7 @@ function buildVoiceStates(
     {
       title: 'Idle',
       note: 'Tap to speak',
+      active: isIdle,
       color: isIdle
         ? 'border-[#8b94a3] bg-white text-[#111827]'
         : 'border-[#e0e5ee] bg-white text-[#7c8493]',
@@ -85,7 +86,8 @@ function buildVoiceStates(
     },
     {
       title: 'Recording',
-      note: isRecording ? `${Math.max(1, Math.ceil(durationMs / 1000))}:00` : '0:03',
+      note: isRecording ? `Recording... ${Math.max(1, Math.ceil(durationMs / 1000))}s` : 'Recording...',
+      active: isRecording,
       color: isRecording
         ? 'border-[#ff5e58] bg-white text-[#111827]'
         : 'border-[#e0e5ee] bg-white text-[#111827]',
@@ -93,7 +95,8 @@ function buildVoiceStates(
     },
     {
       title: 'Processing',
-      note: 'Transcribing...',
+      note: 'Listening to your line...',
+      active: isProcessing,
       color: isProcessing
         ? 'border-[#3f8cff] bg-white text-[#111827]'
         : 'border-[#e0e5ee] bg-white text-[#111827]',
@@ -101,7 +104,8 @@ function buildVoiceStates(
     },
     {
       title: 'Too short',
-      note: 'Please speak a bit longer',
+      note: 'Say one full line, or use the rescue line.',
+      active: isTooShort,
       color: isTooShort
         ? 'border-[#f08a24] bg-white text-[#111827]'
         : 'border-[#e0e5ee] bg-white text-[#111827]',
@@ -109,15 +113,17 @@ function buildVoiceStates(
     },
     {
       title: 'Permission denied',
-      note: 'Mic access is blocked',
+      note: 'Mic is blocked. You can still use AI stand-in.',
+      active: isPermissionDenied,
       color: isPermissionDenied
         ? 'border-[#8e63ff] bg-white text-[#111827]'
         : 'border-[#e0e5ee] bg-white text-[#111827]',
       dot: 'bg-[#8e63ff]'
     },
     {
-      title: 'AI Stand-in Active',
-      note: 'AI continues the scene',
+      title: 'AI stand-in',
+      note: 'AI keeps the scene moving.',
+      active: isStandIn,
       color: isStandIn
         ? 'border-[#3f8cff] bg-white text-[#111827]'
         : 'border-[#e0e5ee] bg-white text-[#111827]',
@@ -176,19 +182,19 @@ export default function PlayPage({ params }: { params: { id: string } }) {
       setState('transcribing');
 
       if (audioBlob.size < 200 || recorder.durationMs < 500) {
-        setTranscriptionNote('Recording was too short, so the AI stand-in kept the scene moving.');
+        setTranscriptionNote('Say one full line, or use the rescue line.');
         setTurnScore(mockTurnScore);
         completeTurn(currentLine.rescueLine, 'too_short');
         setPendingTranscription(false);
         return;
       }
 
-      setTranscriptionNote('Listening to your line and preparing roleplay feedback...');
+      setTranscriptionNote('Listening to your line...');
       const transcription = await transcribeAudio(audioBlob, recorder.durationMs, currentLine.rescueLine);
       if (cancelled) return;
 
       const transcript = transcription.transcript || currentLine.rescueLine;
-      setTranscriptionNote(transcription.message ?? 'Transcription complete. Scoring the roleplay turn...');
+      setTranscriptionNote(transcription.message ?? 'Listening to your line...');
 
       const score = await scoreTurn({
         scenarioId: scenario.id,
@@ -228,7 +234,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
   const handleMicClick = async () => {
     if (recorder.state === 'recording') {
       setPendingTranscription(true);
-      setTranscriptionNote('Recording stopped. Transcribing and scoring this turn...');
+      setTranscriptionNote('Listening to your line...');
       recorder.stopRecording();
       setState('transcribing');
       return;
@@ -240,7 +246,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
     const started = await recorder.startRecording();
     if (started) {
       setState('recording');
-      setTranscriptionNote('Recording. Say the English line clearly and naturally.');
+      setTranscriptionNote('Recording...');
       return;
     }
 
@@ -267,7 +273,7 @@ export default function PlayPage({ params }: { params: { id: string } }) {
   const triggerStandIn = () => {
     recorder.resetRecording();
     setPendingTranscription(false);
-    setTranscriptionNote('AI stand-in performed this line so the scene could continue.');
+    setTranscriptionNote('AI keeps the scene moving.');
     setTurnScore({
       ...mockTurnScore,
       title: 'AI stand-in kept the story moving',
@@ -291,8 +297,15 @@ export default function PlayPage({ params }: { params: { id: string } }) {
     recorder.state === 'recording'
       ? 'Stop speaking'
       : state === 'transcribing'
-        ? 'Processing...'
+        ? 'Listening...'
         : 'Tap to speak';
+
+  const instructionText =
+    state === 'recording'
+      ? 'Recording...'
+      : state === 'transcribing'
+        ? 'Listening to your line...'
+        : transcriptionNote || 'Tap the mic and say the line above.';
 
   return (
     <PlayImplementationScreen
@@ -300,16 +313,25 @@ export default function PlayPage({ params }: { params: { id: string } }) {
       sceneLabel={`Scene ${turn + 1}/${mockLines.length}`}
       progressSegments={mockLines.length}
       activeProgressSegments={turn + 1}
+      directorTipTitle="Director Tip"
+      directorTipText="Sound surprised, then pull a teammate in."
       lineText={currentLine.rescueLine}
-      instructionText={
-        state === 'recording'
-          ? 'Recording now. Say the line above in character.'
-          : transcriptionNote || "It's your turn! Tap the mic and say the line above."
-      }
+      roleHint="角色提示：惊讶一点，然后拉队友一起找蛋糕。"
+      instructionText={instructionText}
       micLabel={micLabel}
       isRecording={recorder.state === 'recording'}
+      listenLabel="Replay line"
+      hintsLabel="Need a line?"
+      hintsCount={0}
       voiceStates={voiceStates}
+      voiceStateMode="current"
       reward={reward}
+      navItems={[
+        { label: 'Scene' },
+        { label: 'Chat' },
+        { label: 'Exit' }
+      ]}
+      bottomNavTone="quiet"
       onBack={() => router.push('/lobby')}
       onMicClick={handleMicClick}
       onHints={triggerStandIn}
