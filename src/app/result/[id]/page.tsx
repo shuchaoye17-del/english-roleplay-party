@@ -159,6 +159,12 @@ function EarnedCard({ title }: { title: string }) {
           </p>
         </div>
       </div>
+      <Link
+        href="/cards"
+        className="mx-auto mt-3 block w-fit rounded-full px-4 py-2 text-center text-[13px] font-black text-[#18a655] transition active:scale-95"
+      >
+        查看表达卡 View Expression Cards
+      </Link>
     </section>
   );
 }

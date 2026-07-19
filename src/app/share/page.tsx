@@ -166,7 +166,7 @@ function PreviewCard({
             <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-[18px] shadow-[0_12px_24px_rgba(15,23,42,0.14)]">
               <Image
                 src="/play-implementation-preview/reward-thumb.webp"
-                alt="Surprised expression card"
+                alt={`${expressionCard} expression card`}
                 fill
                 sizes="88px"
                 className="object-cover"
@@ -315,8 +315,8 @@ export default function SharePage() {
               I just finished a 3-minute English roleplay scene.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <Pill tone="green">S-Scene Saver</Pill>
-              <Pill tone="yellow">Surprised</Pill>
+              <Pill tone="green">{rating}</Pill>
+              <Pill tone="yellow">{expressionCard}</Pill>
               <Pill tone="blue">/onboarding invite</Pill>
             </div>
           </section>

@@ -142,7 +142,7 @@ export default function OnboardingPage() {
       level: 1,
       exp: 0
     });
-    router.push('/play/cafe-chaos');
+    router.push('/lobby');
   };
 
   return (

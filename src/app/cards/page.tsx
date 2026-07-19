@@ -85,7 +85,7 @@ function CardMark({ className = '' }: { className?: string }) {
 function LatestEarnedCard({ latestRun }: { latestRun: LatestRunSummary | null }) {
   const run = latestRun ?? fallbackLatestRun;
   const isFallback = latestRun == null;
-  const earnedTitle = 'Surprised';
+  const earnedTitle = run.expressionCards[0] || fallbackLatestRun.expressionCards[0];
 
   return (
     <section className="mx-4 mt-4 overflow-hidden rounded-[28px] border-2 border-[#28c269] bg-white shadow-[0_16px_36px_rgba(40,194,105,0.14)]">
@@ -94,7 +94,7 @@ function LatestEarnedCard({ latestRun }: { latestRun: LatestRunSummary | null })
           <div className="relative h-[124px] w-[124px] shrink-0 overflow-hidden rounded-[24px] shadow-[0_14px_28px_rgba(15,23,42,0.16)]">
             <Image
               src="/play-implementation-preview/reward-thumb.webp"
-              alt="Surprised expression card"
+              alt={`${earnedTitle} expression card`}
               fill
               sizes="124px"
               priority
@@ -295,6 +295,13 @@ export default function CardsPage() {
             className="mx-auto mt-4 block w-fit rounded-full px-4 py-2 text-center text-[13px] font-black text-[#7c8493] transition active:scale-95"
           >
             重演生日蛋糕 Replay the birthday scene
+          </Link>
+
+          <Link
+            href="/share"
+            className="mx-auto mt-1 block w-fit rounded-full px-4 py-2 text-center text-[13px] font-black text-[#7c8493] transition active:scale-95"
+          >
+            分享这场演出 Share this scene
           </Link>
         </section>
       </div>

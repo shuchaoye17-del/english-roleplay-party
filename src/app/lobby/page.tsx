@@ -200,7 +200,7 @@ function FeaturedScene() {
         </div>
 
         <Link
-          href="/play/cafe-chaos"
+          href="/room/cafe-chaos"
           className="mt-5 flex h-[60px] w-full items-center justify-center gap-3 rounded-full bg-[#ff5e58] px-5 text-center text-[17px] font-black text-white shadow-[0_14px_26px_rgba(255,94,88,0.24)] transition active:scale-95"
         >
           <MicMark className="h-8 w-8 bg-white/20" />
@@ -210,7 +210,7 @@ function FeaturedScene() {
           </span>
         </Link>
         <p className="mt-3 text-center text-[12px] font-bold text-[#7c8493]">
-          进入后先看到英文台词，再点麦克风开演。
+          先确认你的角色和 AI 队友，然后开演。Meet your cast, then start the scene.
         </p>
       </div>
     </section>
